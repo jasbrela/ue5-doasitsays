@@ -1,12 +1,1 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
-#include "MissionData.h"
-
-MissionData::MissionData()
-{
-}
-
-MissionData::~MissionData()
-{
-}
+﻿#include "MissionData.h"

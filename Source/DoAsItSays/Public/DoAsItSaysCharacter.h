@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Interactive.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
 #include "DoAsItSaysCharacter.generated.h"
@@ -27,22 +28,26 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 	void Interact(const FInputActionValue& Value);
+	void InteractionLineTrace();
 
 private:
+	UPROPERTY(EditDefaultsOnly, Category=Interaction)
+	int InteractionRange = 100;
+
+	IInteractive* CurrentInteractiveActor;
+	
 	/** Pawn mesh: 1st person view (arms; seen only by self) */
 	UPROPERTY(VisibleDefaultsOnly, Category=Mesh)
 	USkeletalMeshComponent* Mesh1P;
-
+	
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 	UCameraComponent* CameraComponent;
-
-	UPROPERTY(EditDefaultsOnly, Category=Input)
-	UInputMappingContext* DefaultMappingContext;
-
+	
 	UPROPERTY(EditDefaultsOnly, Category=Input)
 	UInputAction* MoveAction;
 	

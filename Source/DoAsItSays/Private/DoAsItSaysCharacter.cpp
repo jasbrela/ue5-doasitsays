@@ -8,6 +8,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "Interactive.h"
 #include "Engine/LocalPlayer.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
@@ -34,7 +35,15 @@ ADoAsItSaysCharacter::ADoAsItSaysCharacter()
 
 void ADoAsItSaysCharacter::BeginPlay()
 {
+	PrimaryActorTick.bCanEverTick = true;
+
 	Super::BeginPlay();
+}
+
+void ADoAsItSaysCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	InteractionLineTrace();
 }
 
 void ADoAsItSaysCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -78,7 +87,59 @@ void ADoAsItSaysCharacter::Interact(const FInputActionValue& Value)
 	{
 		if (Pressed)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Interact"));
+			if (CurrentInteractiveActor != nullptr)
+			{
+				CurrentInteractiveActor->Interact();
+			}
+		}
+	}
+}
+
+void ADoAsItSaysCharacter::InteractionLineTrace()
+{
+	if (const UWorld* World = GetWorld())
+	{
+		FHitResult Hit;
+		
+		FCollisionQueryParams QueryParams;
+		QueryParams.AddIgnoredActor(this);
+		
+		FVector TraceStart = GetFirstPersonCameraComponent()->GetComponentLocation();
+		FVector TraceEnd = TraceStart + GetFirstPersonCameraComponent()->GetForwardVector() * InteractionRange;
+		
+		World->LineTraceSingleByChannel(Hit, TraceStart, TraceEnd, ECollisionChannel::ECC_Visibility, QueryParams);
+		
+		DrawDebugLine(World, TraceStart, TraceEnd, FColor::Orange);
+
+		AActor* ActorHit = Hit.GetActor();
+		
+		if (Hit.bBlockingHit && IsValid(ActorHit))
+		{
+			if (IInteractive* Interactive = Cast<IInteractive>(ActorHit))
+			{
+				if (CurrentInteractiveActor != Interactive) {
+					if (CurrentInteractiveActor != nullptr)
+					{
+						CurrentInteractiveActor->OnExitRange();
+					}
+					CurrentInteractiveActor = Interactive;
+					CurrentInteractiveActor->OnEnterRange();
+					UE_LOG(LogTemp, Warning, TEXT("New Interactive Set"));
+				}
+				else
+				{
+					UE_LOG(LogTemp, Warning, TEXT("Same Interactive"));
+				}
+			}
+		} else
+		{
+			if (CurrentInteractiveActor != nullptr)
+			{
+				CurrentInteractiveActor->OnExitRange();
+				CurrentInteractiveActor = nullptr;
+				
+				UE_LOG(LogTemp, Warning, TEXT("No Interactive"));
+			}
 		}
 	}
 }
