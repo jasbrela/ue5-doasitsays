@@ -20,13 +20,11 @@ class DOASITSAYS_API IInteractive
 {
 	GENERATED_BODY()
 
-	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
-	bool bIsActive = true;
-	//UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
+	bool bIsInteractive = true;
+	FString Tooltip = "Interact";
 	virtual void OnEnterRange() = 0;
-	//UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
 	virtual void Interact() = 0;
-	//UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
 	virtual void OnExitRange() = 0;
+private:
 };

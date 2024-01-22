@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "VillainWidget.generated.h"
 
+struct FSentenceData;
 class UTextBlock;
 
 /**
@@ -27,19 +28,32 @@ public:
 	void ShowTimer(int seconds);
 	
 	UFUNCTION(BlueprintCallable)
-	void ShowSubtitles(FString text, int seconds);
+	void SetCurrentDialogue(TArray<FSentenceData> sentences);
 
 	UFUNCTION(BlueprintCallable)
 	void ClearSubtitles();
 	
 	UFUNCTION(BlueprintCallable)
 	void ClearTimer();
+
+	TArray<FSentenceData> CurrentDialogue;
+	int CurrentSentenceIndex;
 	
 	UPROPERTY(meta = (BindWidget))
-	UTextBlock* Timer;
+	UTextBlock* TimerText;
+	
 	UPROPERTY(meta = (BindWidget))
-	UTextBlock* Subtitles;
+	UTextBlock* CaptionText;
+	
+	UPROPERTY(Transient, meta = (BindWidgetAnim))
+	UWidgetAnimation* CaptionFadeInAnim;
+	
+	UPROPERTY(Transient, meta = (BindWidgetAnim))
+	UWidgetAnimation* CaptionFadeOutAnim;
 
 private:
-	FTimerHandle ClearSubtitlesTimerHandle;
+	FTimerHandle ShowCaptionTimerHandle;
+	
+	UFUNCTION(BlueprintCallable)
+	void ShowNextCaption();
 };

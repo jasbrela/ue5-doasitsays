@@ -7,6 +7,7 @@
 #include "MissionData.h"
 #include "VillainWidget.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/AudioComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 AVillain::AVillain()
@@ -14,10 +15,14 @@ AVillain::AVillain()
 	PrimaryActorTick.bCanEverTick = false;
 	
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
-	RootComponent = Mesh;
-	
+	TickingAudio = CreateDefaultSubobject<UAudioComponent>(TEXT("TickingAudio"));
+	ShadowWhispers = CreateDefaultSubobject<UAudioComponent>(TEXT("WhispersAudio"));
 	Capsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CapsuleCollision"));
+	
+	RootComponent = Mesh;
 	Capsule->SetupAttachment(RootComponent);
+	TickingAudio->SetupAttachment(RootComponent);
+	ShadowWhispers->SetupAttachment(RootComponent);
 }
 
 void AVillain::Tick(float DeltaTime)
@@ -28,7 +33,12 @@ void AVillain::Tick(float DeltaTime)
 void AVillain::BeginPlay()
 {
 	Super::BeginPlay();
+	ShadowWhispers->bAlwaysPlay = true;
+	UpdateTimerUIDelegate = FTimerDelegate::CreateUObject(this, &AVillain::UpdateTimerUI);
+	StopWhispersDelegate = FTimerDelegate::CreateUObject(this, &AVillain::OnDialogueFinished);
 
+	Tooltip = TEXT("Answer");
+	
 	if (VillainWidgetClass)
 	{
 		if (const UWorld* World = GetWorld())
@@ -39,49 +49,88 @@ void AVillain::BeginPlay()
 	} else {
 		UE_LOG(LogTemp, Error, TEXT("Missing VillainWidgetClass in %s"), *GetName());
 	}
+
+	GiveInitialMission();
 }
 
 void AVillain::Interact()
 {
 	if (VillainWidget)
 	{
-		bIsActive = false;
-		const FMissionData CurrentMission = Missions[CurrentMissionIndex];
-		CurrentTimerSeconds = CurrentMission.TimeFrameInSeconds;
-		
-		if (CurrentTimerSeconds > 0)
+		if (CurrentMission.bIsCompleted)
 		{
-			if (const UWorld* World = GetWorld())
-			{
-				World->GetTimerManager().ClearTimer(TickingTimerHandle);
-				const FTimerDelegate TimerDelegate = FTimerDelegate::CreateUObject(this, &AVillain::UpdateTimerUI);
-				
-				VillainWidget->ShowTimer(CurrentTimerSeconds);
-				
-				World->GetTimerManager().SetTimer(TickingTimerHandle, TimerDelegate, 1.0f, true);
-			}
-		}
-
-		if (CurrentMission.Instruction.Len() > 0)
+			DeliverMission();
+		} else
 		{
-			VillainWidget->ShowSubtitles(CurrentMission.Instruction, 5);
+			GiveMission();
 		}
-	} else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("What"));
 	}
 }
 
 void AVillain::UpdateTimerUI()
 {
-	CurrentTimerSeconds--;
-	VillainWidget->ShowTimer(CurrentTimerSeconds);
-
+	if (ShadowWhispers->IsPlaying())
+	{
+		OnDialogueFinished();
+	}
+	
 	if (CurrentTimerSeconds <= 0)
 	{
 		VillainWidget->Hide();
 		JumpScare();
+		TickingAudio->Stop();
 	}
+	
+	VillainWidget->ShowTimer(CurrentTimerSeconds);
+
+	CurrentTimerSeconds--;
+}
+
+void AVillain::GiveInitialMission()
+{
+	GiveMission();
+	MarkMissionAsCompleted(0);
+	bIsInteractive = false;
+}
+
+void AVillain::GiveMission()
+{
+	ShadowWhispers->FadeIn(3);
+	CurrentMission = Missions[CurrentMissionIndex];
+	
+	MarkMissionAsUncompleted(CurrentMission.ID);
+	CurrentTimerSeconds = CurrentMission.TimeFrameInSeconds;
+		
+	if (CurrentTimerSeconds > 0)
+	{
+		TickingAudio->FadeIn(2);
+
+		GetWorldTimerManager().ClearTimer(TickingTimerHandle);
+		
+		GetWorldTimerManager().SetTimer(TickingTimerHandle, UpdateTimerUIDelegate, 1.0f, true, static_cast<float>(CurrentMission.DialogueDurationInSeconds));
+	}
+
+	if (CurrentMission.DialogueDurationInSeconds > 0)
+	{
+		GetWorldTimerManager().ClearTimer(ShadowWhispersTimerHandle);
+		
+		GetWorldTimerManager().SetTimer(ShadowWhispersTimerHandle, StopWhispersDelegate, static_cast<float>(CurrentMission.DialogueDurationInSeconds), false);
+	}
+	
+	if (CurrentMission.Sentences.Num() > 0)
+	{
+		VillainWidget->SetCurrentDialogue(CurrentMission.Sentences);
+	}
+}
+
+void AVillain::DeliverMission()
+{
+	GetWorldTimerManager().PauseTimer(TickingTimerHandle);
+	
+	TickingAudio->FadeOut(2, 0);
+
+	CurrentMissionIndex++;
+	GiveMission();
 }
 
 void AVillain::JumpScare()
@@ -89,6 +138,29 @@ void AVillain::JumpScare()
 	UE_LOG(LogTemp, Warning, TEXT("Game Over"));
 }
 
+void AVillain::OnDialogueFinished()
+{
+	bIsInteractive = true;
+	ShadowWhispers->FadeOut(3, 0);
+}
+
 void AVillain::OnExitRange() { }
 void AVillain::OnEnterRange() { }
+
+void AVillain::MarkMissionAsCompleted(int id)
+{
+	if (CurrentMission.ID == id)
+	{
+		CurrentMission.bIsCompleted = true;
+		bIsInteractive = true;
+	}
+}
+void AVillain::MarkMissionAsUncompleted(int id)
+{
+	if (CurrentMission.ID == id)
+	{
+		CurrentMission.bIsCompleted = false;
+		bIsInteractive = false;
+	}
+}
 

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Interactive.h"
 #include "GameFramework/Actor.h"
+#include "MissionData.h"
 #include "Villain.generated.h"
 
 class UVillainWidget;
@@ -21,7 +22,9 @@ public:
 	virtual void Interact() override;
 	virtual void OnExitRange() override;
 	virtual void OnEnterRange() override;
-	
+	void MarkMissionAsCompleted(int id);
+	void MarkMissionAsUncompleted(int id);
+
 protected:
 	virtual void BeginPlay() override;
 	
@@ -37,7 +40,7 @@ protected:
 	
 private:
 	UPROPERTY(EditDefaultsOnly)
-	TArray<struct FMissionData> Missions;
+	TArray<FMissionData> Missions;
 	
 	UPROPERTY(EditDefaultsOnly)
 	UStaticMeshComponent* Mesh;
@@ -45,8 +48,22 @@ private:
 	UPROPERTY(EditDefaultsOnly)
 	UCapsuleComponent* Capsule;
 
+	UPROPERTY(EditDefaultsOnly)
+	UAudioComponent* TickingAudio;
+
+	UPROPERTY(EditDefaultsOnly)
+	UAudioComponent* ShadowWhispers;
+	
+	void GiveMission();
+	void DeliverMission();
 	void JumpScare();
+	void OnDialogueFinished();
 	void UpdateTimerUI();
+	void GiveInitialMission();
 	int CurrentTimerSeconds = 0;
+	FMissionData CurrentMission;
 	FTimerHandle TickingTimerHandle;
+	FTimerHandle ShadowWhispersTimerHandle;
+	FTimerDelegate UpdateTimerUIDelegate;
+	FTimerDelegate StopWhispersDelegate;
 };

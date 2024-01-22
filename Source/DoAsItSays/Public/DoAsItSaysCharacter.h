@@ -63,5 +63,8 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = Input)
 	UInputAction* InteractAction;
+
+	UPROPERTY(EditDefaultsOnly, Category = Camera)
+	TSubclassOf<UCameraShakeBase> CameraShake;
 };
 

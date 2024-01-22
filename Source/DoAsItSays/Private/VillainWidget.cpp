@@ -3,6 +3,7 @@
 
 #include "VillainWidget.h"
 
+#include "FSentenceData.h"
 #include "Components/TextBlock.h"
 
 UVillainWidget::UVillainWidget(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer) { }
@@ -14,59 +15,78 @@ void UVillainWidget::NativeConstruct()
 
 void UVillainWidget::Hide()
 {
-	Subtitles->SetVisibility(ESlateVisibility::Collapsed);
-	Timer->SetVisibility(ESlateVisibility::Collapsed);
+	CaptionText->SetVisibility(ESlateVisibility::Collapsed);
+	TimerText->SetVisibility(ESlateVisibility::Collapsed);
 }
 
 void UVillainWidget::ShowTimer(int seconds)
 {
-	if (Timer)
+	if (TimerText)
 	{
-		if (Timer->GetVisibility() != ESlateVisibility::Visible)
+		if (TimerText->GetVisibility() != ESlateVisibility::Visible)
 		{
-			Timer->SetVisibility(ESlateVisibility::Visible);
+			TimerText->SetVisibility(ESlateVisibility::Visible);
 		}
-		Timer->SetText(FText::AsNumber(seconds));
+		TimerText->SetText(FText::AsNumber(seconds));
 	} else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("TIMER IS NULL"));
 	}
 }
 
-void UVillainWidget::ShowSubtitles(FString text, int seconds)
+void UVillainWidget::SetCurrentDialogue(TArray<FSentenceData> sentences)
 {
-	if (Subtitles)
+	CurrentDialogue = sentences;
+	CurrentSentenceIndex = 0;
+	ShowNextCaption();
+}
+
+void UVillainWidget::ShowNextCaption()
+{
+	if (CurrentDialogue.Num() <= CurrentSentenceIndex)
 	{
-		if (Subtitles->GetVisibility() != ESlateVisibility::Visible)
+		ClearSubtitles();
+		return;
+	}
+	
+	if (CaptionText)
+	{
+		const FSentenceData CurrentSentence = CurrentDialogue[CurrentSentenceIndex];
+
+		if (CurrentSentence.Text == TEXT("N/A"))
 		{
-			Subtitles->SetVisibility(ESlateVisibility::Visible);
+			PlayAnimation(CaptionFadeOutAnim);
+		} else
+		{
+			CaptionText->SetText(FText::FromString(CurrentSentence.Text));
+			
+			PlayAnimation(CaptionFadeInAnim);
 		}
 
 		if (const UWorld* World = GetWorld())
 		{
-			World->GetTimerManager().ClearTimer(ClearSubtitlesTimerHandle);
+			World->GetTimerManager().ClearTimer(ShowCaptionTimerHandle);
 
-			const FTimerDelegate TimerDelegate = FTimerDelegate::CreateUObject(this, &UVillainWidget::ClearSubtitles);
-			World->GetTimerManager().SetTimer(ClearSubtitlesTimerHandle, TimerDelegate, seconds, false);
+			const FTimerDelegate TimerDelegate = FTimerDelegate::CreateUObject(this, &UVillainWidget::ShowNextCaption);
+			World->GetTimerManager().SetTimer(ShowCaptionTimerHandle, TimerDelegate,  CurrentSentence.Seconds, false);
 		}
-
-		Subtitles->SetText(FText::FromString(text));
+		
+		CurrentSentenceIndex++;
 	}
-
 }
 
 void UVillainWidget::ClearSubtitles()
 {
-	if (Subtitles)
+	if (CaptionText)
 	{
-		Subtitles->SetVisibility(ESlateVisibility::Collapsed);
+		PlayAnimation(CaptionFadeOutAnim);
 	}
 }
 
 void UVillainWidget::ClearTimer()
 {
-	if (Timer)
+	if (TimerText)
 	{
-		Timer->SetVisibility(ESlateVisibility::Collapsed);
+		TimerText->SetVisibility(ESlateVisibility::Collapsed);
 	}
 }

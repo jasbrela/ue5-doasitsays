@@ -39,6 +39,8 @@ ADoAsItSaysCharacter::ADoAsItSaysCharacter()
 void ADoAsItSaysCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	UGameplayStatics::GetPlayerCameraManager(this, 0)->StartCameraShake(CameraShake);
 	
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -118,7 +120,7 @@ void ADoAsItSaysCharacter::InteractionLineTrace()
 		
 		World->LineTraceSingleByChannel(Hit, TraceStart, TraceEnd, ECollisionChannel::ECC_Visibility, QueryParams);
 		
-		DrawDebugLine(World, TraceStart, TraceEnd, FColor::Orange);
+		//DrawDebugLine(World, TraceStart, TraceEnd, FColor::Orange);
 
 		AActor* ActorHit = Hit.GetActor();
 		
@@ -132,11 +134,10 @@ void ADoAsItSaysCharacter::InteractionLineTrace()
 						CurrentInteractiveActor->OnExitRange();
 					}
 					
-					if (Interactive->bIsActive && CurrentInteractiveActor == nullptr)
+					if (Interactive->bIsInteractive && CurrentInteractiveActor == nullptr)
 					{
-						InteractionWidget->ToggleInteraction(true);
-						
 						CurrentInteractiveActor = Interactive;
+						InteractionWidget->ToggleInteraction(true, CurrentInteractiveActor->Tooltip);
 						CurrentInteractiveActor->OnEnterRange();
 						//UE_LOG(LogTemp, Warning, TEXT("New Interactive Set"));
 					} else
@@ -145,7 +146,7 @@ void ADoAsItSaysCharacter::InteractionLineTrace()
 						InteractionWidget->ToggleInteraction(false);
 					}
 				}
-				else if (!CurrentInteractiveActor->bIsActive)
+				else if (!CurrentInteractiveActor->bIsInteractive)
 				{
 					CurrentInteractiveActor->OnExitRange();
 					CurrentInteractiveActor = nullptr;
