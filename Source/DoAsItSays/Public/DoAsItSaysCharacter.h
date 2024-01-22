@@ -3,15 +3,16 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Interactive.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
 #include "DoAsItSaysCharacter.generated.h"
 
+class IInteractive;
 class UInputComponent;
 class USkeletalMeshComponent;
 class UCameraComponent;
 class UInputAction;
+class UInteractionWidget;
 class UInputMappingContext;
 struct FInputActionValue;
 
@@ -34,6 +35,12 @@ protected:
 	void Look(const FInputActionValue& Value);
 	void Interact(const FInputActionValue& Value);
 	void InteractionLineTrace();
+	
+	UPROPERTY(EditDefaultsOnly, Category="Interaction")
+	TSubclassOf<UUserWidget> InteractionClass;
+	
+	UPROPERTY()
+	UInteractionWidget* InteractionWidget;
 
 private:
 	UPROPERTY(EditDefaultsOnly, Category=Interaction)

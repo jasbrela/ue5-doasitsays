@@ -8,8 +8,11 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "InteractionWidget.h"
 #include "Interactive.h"
+#include "Blueprint/UserWidget.h"
 #include "Engine/LocalPlayer.h"
+#include "Kismet/GameplayStatics.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -35,9 +38,15 @@ ADoAsItSaysCharacter::ADoAsItSaysCharacter()
 
 void ADoAsItSaysCharacter::BeginPlay()
 {
+	Super::BeginPlay();
+	
 	PrimaryActorTick.bCanEverTick = true;
 
-	Super::BeginPlay();
+	if (const UWorld* World = GetWorld(); InteractionClass && World)
+	{
+		InteractionWidget = CreateWidget<UInteractionWidget>(UGameplayStatics::GetPlayerController(World, 0), InteractionClass, TEXT("InteractionUI"));
+		InteractionWidget->AddToViewport(0);
+	}
 }
 
 void ADoAsItSaysCharacter::Tick(float DeltaTime)
@@ -122,13 +131,25 @@ void ADoAsItSaysCharacter::InteractionLineTrace()
 					{
 						CurrentInteractiveActor->OnExitRange();
 					}
-					CurrentInteractiveActor = Interactive;
-					CurrentInteractiveActor->OnEnterRange();
-					UE_LOG(LogTemp, Warning, TEXT("New Interactive Set"));
+					
+					if (Interactive->bIsActive && CurrentInteractiveActor == nullptr)
+					{
+						InteractionWidget->ToggleInteraction(true);
+						
+						CurrentInteractiveActor = Interactive;
+						CurrentInteractiveActor->OnEnterRange();
+						//UE_LOG(LogTemp, Warning, TEXT("New Interactive Set"));
+					} else
+					{
+						CurrentInteractiveActor = nullptr;
+						InteractionWidget->ToggleInteraction(false);
+					}
 				}
-				else
+				else if (!CurrentInteractiveActor->bIsActive)
 				{
-					UE_LOG(LogTemp, Warning, TEXT("Same Interactive"));
+					CurrentInteractiveActor->OnExitRange();
+					CurrentInteractiveActor = nullptr;
+					InteractionWidget->ToggleInteraction(false);
 				}
 			}
 		} else
@@ -137,8 +158,9 @@ void ADoAsItSaysCharacter::InteractionLineTrace()
 			{
 				CurrentInteractiveActor->OnExitRange();
 				CurrentInteractiveActor = nullptr;
+				InteractionWidget->ToggleInteraction(false);
 				
-				UE_LOG(LogTemp, Warning, TEXT("No Interactive"));
+				//UE_LOG(LogTemp, Warning, TEXT("No Interactive"));
 			}
 		}
 	}

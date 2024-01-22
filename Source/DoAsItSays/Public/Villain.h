@@ -7,6 +7,7 @@
 #include "GameFramework/Actor.h"
 #include "Villain.generated.h"
 
+class UVillainWidget;
 class UCapsuleComponent;
 
 UCLASS()
@@ -24,9 +25,28 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly)
+	int CurrentMissionIndex = 0;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UUserWidget> VillainWidgetClass;
+	
+	UPROPERTY()
+	UVillainWidget* VillainWidget;
+
+	
 private:
 	UPROPERTY(EditDefaultsOnly)
+	TArray<struct FMissionData> Missions;
+	
+	UPROPERTY(EditDefaultsOnly)
 	UStaticMeshComponent* Mesh;
+	
 	UPROPERTY(EditDefaultsOnly)
 	UCapsuleComponent* Capsule;
+
+	void JumpScare();
+	void UpdateTimerUI();
+	int CurrentTimerSeconds = 0;
+	FTimerHandle TickingTimerHandle;
 };
