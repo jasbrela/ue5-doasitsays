@@ -9,8 +9,9 @@
 
 UInteractionWidget::UInteractionWidget(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer) { }
 
-void UInteractionWidget::ToggleInteraction(bool bInteractiveActorFound, FString Instruction)
+void UInteractionWidget::ToggleTooltip(bool bInteractiveActorFound, FString Instruction)
 {
+	//UE_LOG(LogTemp, Warning, TEXT("Toggle Tooltip: %hs"), bInteractiveActorFound ? "true" : "false")
 	if (bInteractiveActorFound)
 	{
 		Crosshair->SetOpacity(1);

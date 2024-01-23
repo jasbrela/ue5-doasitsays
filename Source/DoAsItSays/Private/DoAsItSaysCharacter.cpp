@@ -10,8 +10,10 @@
 #include "InputActionValue.h"
 #include "InteractionWidget.h"
 #include "Interactive.h"
+#include "PickUpObject.h"
 #include "Blueprint/UserWidget.h"
 #include "Engine/LocalPlayer.h"
+#include "Engine/SkeletalMeshSocket.h"
 #include "Kismet/GameplayStatics.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
@@ -19,7 +21,7 @@ DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 ADoAsItSaysCharacter::ADoAsItSaysCharacter()
 {
 	GetCapsuleComponent()->InitCapsuleSize(55.f, 96.0f);
-		
+
 	// Create a CameraComponent	
 	CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
 	CameraComponent->SetupAttachment(GetCapsuleComponent());
@@ -33,7 +35,6 @@ ADoAsItSaysCharacter::ADoAsItSaysCharacter()
 	Mesh1P->bCastDynamicShadow = false;
 	Mesh1P->CastShadow = false;
 	Mesh1P->SetRelativeLocation(FVector(-30.f, 0.f, -150.f));
-
 }
 
 void ADoAsItSaysCharacter::BeginPlay()
@@ -41,12 +42,13 @@ void ADoAsItSaysCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	UGameplayStatics::GetPlayerCameraManager(this, 0)->StartCameraShake(CameraShake);
-	
+
 	PrimaryActorTick.bCanEverTick = true;
 
 	if (const UWorld* World = GetWorld(); InteractionClass && World)
 	{
-		InteractionWidget = CreateWidget<UInteractionWidget>(UGameplayStatics::GetPlayerController(World, 0), InteractionClass, TEXT("InteractionUI"));
+		InteractionWidget = CreateWidget<UInteractionWidget>(UGameplayStatics::GetPlayerController(World, 0),
+		                                                     InteractionClass, TEXT("InteractionUI"));
 		InteractionWidget->AddToViewport(0);
 	}
 }
@@ -65,15 +67,15 @@ void ADoAsItSaysCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ADoAsItSaysCharacter::Move);
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ADoAsItSaysCharacter::Look);
 		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &ADoAsItSaysCharacter::Interact);
+		EnhancedInputComponent->BindAction(DropAction, ETriggerEvent::Triggered, this, &ADoAsItSaysCharacter::Drop);
 	}
 }
 
 void ADoAsItSaysCharacter::Move(const FInputActionValue& Value)
 {
-	const FVector2D MovementVector = Value.Get<FVector2D>();
-
 	if (Controller != nullptr)
 	{
+		const FVector2D MovementVector = Value.Get<FVector2D>();
 		AddMovementInput(GetActorForwardVector(), MovementVector.Y);
 		AddMovementInput(GetActorRightVector(), MovementVector.X);
 	}
@@ -81,10 +83,9 @@ void ADoAsItSaysCharacter::Move(const FInputActionValue& Value)
 
 void ADoAsItSaysCharacter::Look(const FInputActionValue& Value)
 {
-	const FVector2D LookAxisVector = Value.Get<FVector2D>();
-
 	if (Controller != nullptr)
 	{
+		const FVector2D LookAxisVector = Value.Get<FVector2D>();
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
 	}
@@ -92,13 +93,21 @@ void ADoAsItSaysCharacter::Look(const FInputActionValue& Value)
 
 void ADoAsItSaysCharacter::Interact(const FInputActionValue& Value)
 {
-	const bool Pressed = Value.Get<bool>();
-	
 	if (Controller != nullptr)
 	{
-		if (Pressed)
+		if (Value.Get<bool>())
 		{
-			if (CurrentInteractiveActor != nullptr)
+			if (CurrentPickUpActor != nullptr && CarriedPickUpActor == nullptr)
+			{
+				CarriedPickUpActor = CurrentPickUpActor;
+				CurrentPickUpActor = nullptr;
+				const FAttachmentTransformRules rules = FAttachmentTransformRules(EAttachmentRule::SnapToTarget,
+					EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, false);
+				CarriedPickUpActor->OnPickUpObject();
+				CarriedPickUpActor->AttachToComponent(Mesh1P, rules, TEXT("socket"));
+				InteractionWidget->ToggleTooltip(false);
+			}
+			else if (CurrentInteractiveActor != nullptr)
 			{
 				CurrentInteractiveActor->Interact();
 			}
@@ -106,63 +115,106 @@ void ADoAsItSaysCharacter::Interact(const FInputActionValue& Value)
 	}
 }
 
+void ADoAsItSaysCharacter::Drop(const FInputActionValue& Value)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Drop try"));
+	if (Controller != nullptr)
+	{
+		if (Value.Get<bool>())
+		{
+			if (CarriedPickUpActor != nullptr)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Drop"));
+				const FDetachmentTransformRules rules = FDetachmentTransformRules(EDetachmentRule::KeepWorld, EDetachmentRule::KeepWorld, EDetachmentRule::KeepWorld, false);
+				CarriedPickUpActor->DetachFromActor(rules);
+				CarriedPickUpActor->OnDropObject();
+				CarriedPickUpActor = nullptr;
+			}
+		}
+	}
+}
+
+
 void ADoAsItSaysCharacter::InteractionLineTrace()
 {
 	if (const UWorld* World = GetWorld())
 	{
 		FHitResult Hit;
-		
+
 		FCollisionQueryParams QueryParams;
 		QueryParams.AddIgnoredActor(this);
-		
+
 		FVector TraceStart = GetFirstPersonCameraComponent()->GetComponentLocation();
 		FVector TraceEnd = TraceStart + GetFirstPersonCameraComponent()->GetForwardVector() * InteractionRange;
-		
+
 		World->LineTraceSingleByChannel(Hit, TraceStart, TraceEnd, ECollisionChannel::ECC_Visibility, QueryParams);
-		
+
 		//DrawDebugLine(World, TraceStart, TraceEnd, FColor::Orange);
 
 		AActor* ActorHit = Hit.GetActor();
-		
+
 		if (Hit.bBlockingHit && IsValid(ActorHit))
 		{
 			if (IInteractive* Interactive = Cast<IInteractive>(ActorHit))
 			{
-				if (CurrentInteractiveActor != Interactive) {
-					if (CurrentInteractiveActor != nullptr)
-					{
-						CurrentInteractiveActor->OnExitRange();
-					}
-					
-					if (Interactive->bIsInteractive && CurrentInteractiveActor == nullptr)
-					{
-						CurrentInteractiveActor = Interactive;
-						InteractionWidget->ToggleInteraction(true, CurrentInteractiveActor->Tooltip);
-						CurrentInteractiveActor->OnEnterRange();
-						//UE_LOG(LogTemp, Warning, TEXT("New Interactive Set"));
-					} else
-					{
-						CurrentInteractiveActor = nullptr;
-						InteractionWidget->ToggleInteraction(false);
-					}
-				}
-				else if (!CurrentInteractiveActor->bIsInteractive)
+				SetPickUpObject(nullptr);
+
+				if (Interactive->bIsInteractive && CurrentInteractiveActor == nullptr)
 				{
-					CurrentInteractiveActor->OnExitRange();
-					CurrentInteractiveActor = nullptr;
-					InteractionWidget->ToggleInteraction(false);
+					SetInteractiveObject(Interactive);
+				}
+				else
+				{
+					SetInteractiveObject(nullptr);
 				}
 			}
-		} else
-		{
-			if (CurrentInteractiveActor != nullptr)
+			else if (!CarriedPickUpActor)
 			{
-				CurrentInteractiveActor->OnExitRange();
-				CurrentInteractiveActor = nullptr;
-				InteractionWidget->ToggleInteraction(false);
-				
-				//UE_LOG(LogTemp, Warning, TEXT("No Interactive"));
+				SetInteractiveObject(nullptr);
+
+				if (APickUpObject* PickUpObject = Cast<APickUpObject>(ActorHit))
+				{
+					SetPickUpObject(PickUpObject);
+				}
+				else
+				{
+					SetPickUpObject(nullptr);
+				}
 			}
 		}
+		else
+		{
+			SetInteractiveObject(nullptr);
+			SetPickUpObject(nullptr);
+		}
+	}
+}
+
+void ADoAsItSaysCharacter::SetInteractiveObject(IInteractive* Interactive)
+{
+	if (CurrentInteractiveActor != Interactive)
+	{
+		if (CurrentInteractiveActor != nullptr)
+		{
+			CurrentInteractiveActor->OnExitRange();
+		}
+
+		CurrentInteractiveActor = Interactive;
+
+		if (Interactive != nullptr)
+		{
+			CurrentInteractiveActor->OnEnterRange();
+		}
+
+		InteractionWidget->ToggleTooltip(Interactive != nullptr, Interactive->Tooltip);
+	}
+}
+
+void ADoAsItSaysCharacter::SetPickUpObject(APickUpObject* PickUp)
+{
+	if (CurrentPickUpActor != PickUp)
+	{
+		CurrentPickUpActor = PickUp;
+		InteractionWidget->ToggleTooltip(PickUp != nullptr, TEXT("PickUp"));
 	}
 }

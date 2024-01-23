@@ -21,7 +21,7 @@ public:
 	virtual void NativeConstruct() override;
 
 	UFUNCTION(BlueprintCallable)
-	void ToggleInteraction(bool bInteractiveActorFound, FString Instruction = TEXT("Interact"));
+	void ToggleTooltip(bool bInteractiveActorFound, FString Instruction = TEXT("Interact"));
 	
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* Tooltip;

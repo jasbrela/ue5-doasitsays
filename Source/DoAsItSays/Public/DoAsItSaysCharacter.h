@@ -7,6 +7,7 @@
 #include "Logging/LogMacros.h"
 #include "DoAsItSaysCharacter.generated.h"
 
+class APickUpObject;
 class IInteractive;
 class UInputComponent;
 class USkeletalMeshComponent;
@@ -34,7 +35,10 @@ protected:
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 	void Interact(const FInputActionValue& Value);
+	void Drop(const FInputActionValue& Value);
 	void InteractionLineTrace();
+	void SetInteractiveObject(IInteractive* Interactive);
+	void SetPickUpObject(APickUpObject* PickUp);
 	
 	UPROPERTY(EditDefaultsOnly, Category="Interaction")
 	TSubclassOf<UUserWidget> InteractionClass;
@@ -47,6 +51,12 @@ private:
 	int InteractionRange = 100;
 
 	IInteractive* CurrentInteractiveActor;
+	/// the Pick Up Actor the Character is currently looking at
+	UPROPERTY(VisibleInstanceOnly)
+	APickUpObject* CurrentPickUpActor;
+	/// the Pick Up Actor the Character is currently carrying
+	UPROPERTY(VisibleInstanceOnly)
+	APickUpObject* CarriedPickUpActor;
 	
 	/** Pawn mesh: 1st person view (arms; seen only by self) */
 	UPROPERTY(VisibleDefaultsOnly, Category=Mesh)
@@ -63,6 +73,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = Input)
 	UInputAction* InteractAction;
+
+	UPROPERTY(EditDefaultsOnly, Category = Input)
+	UInputAction* DropAction;
 
 	UPROPERTY(EditDefaultsOnly, Category = Camera)
 	TSubclassOf<UCameraShakeBase> CameraShake;
