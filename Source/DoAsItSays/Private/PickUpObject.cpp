@@ -3,16 +3,16 @@
 
 #include "PickUpObject.h"
 
-#include "Components/CapsuleComponent.h"
+#include "Components/BoxComponent.h"
 
 // Sets default values
 APickUpObject::APickUpObject()
 {
 	PrimaryActorTick.bCanEverTick = false;
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
-	Collision = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CapsuleCollision"));
+	Box = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxCollision"));
 
-	RootComponent = Collision;
+	RootComponent = Box;
 	Mesh->SetupAttachment(RootComponent);
 	Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
@@ -29,12 +29,14 @@ void APickUpObject::Tick(float DeltaTime)
 
 void APickUpObject::OnPickUpObject()
 {
-	Collision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	Collision->SetSimulatePhysics(false);
+	Mesh->SetMaterial(0, FixedMaterial);
+	Box->SetSimulatePhysics(false);
+	Box->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 void APickUpObject::OnDropObject()
 {
-	Collision->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	Collision->SetSimulatePhysics(true);
+	Mesh->SetMaterial(0, DefaultMaterial);
+	Box->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	Box->SetSimulatePhysics(true);
 }

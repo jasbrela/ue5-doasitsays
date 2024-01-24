@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "InteractionEffect.h"
 #include "Interactive.h"
 #include "GameFramework/Actor.h"
 #include "MissionData.h"
@@ -19,7 +20,7 @@ class DOASITSAYS_API AVillain : public AActor, public IInteractive
 public:	
 	AVillain();
 	virtual void Tick(float DeltaTime) override;
-	virtual void Interact() override;
+	virtual void Interact(EInteractionEffect Effect = EInteractionEffect::None) override;
 	virtual void OnExitRange() override;
 	virtual void OnEnterRange() override;
 	void MarkMissionAsCompleted(int id);
@@ -39,8 +40,11 @@ protected:
 
 	
 private:
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(VisibleInstanceOnly)
 	TArray<FMissionData> Missions;
+
+	UPROPERTY(EditDefaultsOnly)
+	UDataTable* Table;
 	
 	UPROPERTY(EditDefaultsOnly)
 	UStaticMeshComponent* Mesh;
@@ -55,7 +59,7 @@ private:
 	UAudioComponent* ShadowWhispers;
 	
 	void GiveMission();
-	void DeliverMission();
+	void NextMission();
 	void JumpScare();
 	void OnDialogueFinished();
 	void UpdateTimerUI();

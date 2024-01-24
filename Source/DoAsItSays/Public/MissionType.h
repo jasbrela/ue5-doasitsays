@@ -3,7 +3,6 @@
 UENUM()
 enum EMissionType
 {
-	Find		UMETA(DisplayName = "Find"),
-	Collect		UMETA(DisplayName = "Collect"),
-	Kill		UMETA(DisplayName = "Kill"),
+	Interact			UMETA(DisplayName = "Interact"),
+	GoToLocation		UMETA(DisplayName = "GoToLocation"),
 };

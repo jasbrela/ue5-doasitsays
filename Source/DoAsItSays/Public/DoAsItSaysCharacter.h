@@ -50,6 +50,8 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category=Interaction)
 	int InteractionRange = 100;
 
+	bool WasCarryingObject = false;
+
 	IInteractive* CurrentInteractiveActor;
 	/// the Pick Up Actor the Character is currently looking at
 	UPROPERTY(VisibleInstanceOnly)

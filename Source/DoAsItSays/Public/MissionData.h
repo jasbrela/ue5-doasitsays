@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "MissionType.h"
 #include "FSentenceData.h"
+#include "InteractionEffect.h"
 #include "MissionData.generated.h"
 
 USTRUCT(BlueprintType)
@@ -17,7 +18,7 @@ public:
 	TEnumAsByte<EMissionType> Type;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<FSentenceData> Sentences;
+	TEnumAsByte<EInteractionEffect> RequiredEffect;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int DialogueDurationInSeconds;
@@ -26,5 +27,8 @@ public:
 	int TimeFrameInSeconds;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<FSentenceData> Sentences;
+	
+	UPROPERTY(BlueprintReadWrite)
 	bool bIsCompleted;
 };

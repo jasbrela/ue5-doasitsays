@@ -66,7 +66,8 @@ void ADoAsItSaysCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 	{
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ADoAsItSaysCharacter::Move);
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ADoAsItSaysCharacter::Look);
-		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &ADoAsItSaysCharacter::Interact);
+		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this,
+		                                   &ADoAsItSaysCharacter::Interact);
 		EnhancedInputComponent->BindAction(DropAction, ETriggerEvent::Triggered, this, &ADoAsItSaysCharacter::Drop);
 	}
 }
@@ -97,6 +98,7 @@ void ADoAsItSaysCharacter::Interact(const FInputActionValue& Value)
 	{
 		if (Value.Get<bool>())
 		{
+			// Not carrying anything, but looking to a pick up actor
 			if (CurrentPickUpActor != nullptr && CarriedPickUpActor == nullptr)
 			{
 				CarriedPickUpActor = CurrentPickUpActor;
@@ -107,9 +109,17 @@ void ADoAsItSaysCharacter::Interact(const FInputActionValue& Value)
 				CarriedPickUpActor->AttachToComponent(Mesh1P, rules, TEXT("socket"));
 				InteractionWidget->ToggleTooltip(false);
 			}
+			// Looking at a interactive actor
 			else if (CurrentInteractiveActor != nullptr)
 			{
-				CurrentInteractiveActor->Interact();
+				EInteractionEffect Effect = EInteractionEffect::None;
+				
+				if (CarriedPickUpActor != nullptr)
+				{
+					Effect = CarriedPickUpActor->Effect;
+				}
+				
+				CurrentInteractiveActor->Interact(Effect);
 			}
 		}
 	}
@@ -117,15 +127,15 @@ void ADoAsItSaysCharacter::Interact(const FInputActionValue& Value)
 
 void ADoAsItSaysCharacter::Drop(const FInputActionValue& Value)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Drop try"));
 	if (Controller != nullptr)
 	{
 		if (Value.Get<bool>())
 		{
 			if (CarriedPickUpActor != nullptr)
 			{
-				UE_LOG(LogTemp, Warning, TEXT("Drop"));
-				const FDetachmentTransformRules rules = FDetachmentTransformRules(EDetachmentRule::KeepWorld, EDetachmentRule::KeepWorld, EDetachmentRule::KeepWorld, false);
+				WasCarryingObject = true;
+				const FDetachmentTransformRules rules = FDetachmentTransformRules(
+					EDetachmentRule::KeepWorld, EDetachmentRule::KeepWorld, EDetachmentRule::KeepWorld, false);
 				CarriedPickUpActor->DetachFromActor(rules);
 				CarriedPickUpActor->OnDropObject();
 				CarriedPickUpActor = nullptr;
@@ -168,18 +178,15 @@ void ADoAsItSaysCharacter::InteractionLineTrace()
 					SetInteractiveObject(nullptr);
 				}
 			}
-			else if (!CarriedPickUpActor)
+			else if (APickUpObject* PickUpObject = Cast<APickUpObject>(ActorHit))
 			{
 				SetInteractiveObject(nullptr);
-
-				if (APickUpObject* PickUpObject = Cast<APickUpObject>(ActorHit))
-				{
-					SetPickUpObject(PickUpObject);
-				}
-				else
-				{
-					SetPickUpObject(nullptr);
-				}
+				SetPickUpObject(PickUpObject);
+			}
+			else
+			{
+				SetInteractiveObject(nullptr);
+				SetPickUpObject(nullptr);
 			}
 		}
 		else
@@ -201,12 +208,13 @@ void ADoAsItSaysCharacter::SetInteractiveObject(IInteractive* Interactive)
 
 		CurrentInteractiveActor = Interactive;
 
-		if (Interactive != nullptr)
+		if (CurrentInteractiveActor != nullptr)
 		{
 			CurrentInteractiveActor->OnEnterRange();
 		}
 
-		InteractionWidget->ToggleTooltip(Interactive != nullptr, Interactive->Tooltip);
+		const FString TooltipText = Interactive != nullptr ? TEXT("[E] " + Interactive->Tooltip) : TEXT("");
+		InteractionWidget->ToggleTooltip(CurrentInteractiveActor != nullptr, TooltipText);
 	}
 }
 
@@ -215,6 +223,17 @@ void ADoAsItSaysCharacter::SetPickUpObject(APickUpObject* PickUp)
 	if (CurrentPickUpActor != PickUp)
 	{
 		CurrentPickUpActor = PickUp;
-		InteractionWidget->ToggleTooltip(PickUp != nullptr, TEXT("PickUp"));
+
+		const FString Instruction = CarriedPickUpActor ? TEXT("Full hands\n[G] Drop item") : TEXT("[E] Pick Up");
+		InteractionWidget->ToggleTooltip(PickUp != nullptr, Instruction);
+	}
+	else if (WasCarryingObject && !CarriedPickUpActor)
+	{
+		if (PickUp != nullptr)
+		{
+			WasCarryingObject = false;
+			CurrentPickUpActor = PickUp;
+			InteractionWidget->ToggleTooltip(true, TEXT("[E] Pick Up"));
+		}
 	}
 }

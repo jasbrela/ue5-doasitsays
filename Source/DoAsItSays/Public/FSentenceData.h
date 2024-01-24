@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "FSentenceData.generated.h"
 
+enum EVillainExpression : int;
+
 USTRUCT(BlueprintType)
 struct FSentenceData
 {
@@ -10,6 +12,9 @@ struct FSentenceData
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString Text = TEXT("N/A");
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TEnumAsByte<EVillainExpression> Expression;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int Seconds;

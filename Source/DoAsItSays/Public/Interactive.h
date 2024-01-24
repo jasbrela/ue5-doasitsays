@@ -3,10 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "InteractionEffect.h"
 #include "UObject/Interface.h"
 #include "Interactive.generated.h"
 
-// This class does not need to be modified.
+enum EInteractionEffect : int;
+
 UINTERFACE(MinimalAPI)
 class UInteractive : public UInterface
 {
@@ -24,7 +26,7 @@ public:
 	bool bIsInteractive = true;
 	FString Tooltip = "Interact";
 	virtual void OnEnterRange() = 0;
-	virtual void Interact() = 0;
+	virtual void Interact(EInteractionEffect Effect = EInteractionEffect::None) = 0;
 	virtual void OnExitRange() = 0;
 private:
 };

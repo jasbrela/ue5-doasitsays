@@ -15,7 +15,7 @@ void UInteractionWidget::ToggleTooltip(bool bInteractiveActorFound, FString Inst
 	if (bInteractiveActorFound)
 	{
 		Crosshair->SetOpacity(1);
-		const FString TooltipText = TEXT("[E] " + Instruction);	
+		const FString TooltipText = Instruction;	
 		Tooltip->SetText(FText::FromString(TooltipText));
 		Tooltip->SetVisibility(ESlateVisibility::Visible);
 	} else

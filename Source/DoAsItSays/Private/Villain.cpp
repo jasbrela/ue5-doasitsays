@@ -33,6 +33,15 @@ void AVillain::Tick(float DeltaTime)
 void AVillain::BeginPlay()
 {
 	Super::BeginPlay();
+	const TArray<FName> Names = Table->GetRowNames();
+	const FString Context = TEXT("");
+	
+	for (int i = 0; i < Names.Num(); i++)
+	{
+		const FMissionData* Mission = Table->FindRow<FMissionData>(Names[i], Context);
+		Missions.Add(*Mission);
+	}
+	
 	ShadowWhispers->bAlwaysPlay = true;
 	UpdateTimerUIDelegate = FTimerDelegate::CreateUObject(this, &AVillain::UpdateTimerUI);
 	StopWhispersDelegate = FTimerDelegate::CreateUObject(this, &AVillain::OnDialogueFinished);
@@ -56,17 +65,28 @@ void AVillain::BeginPlay()
 	GiveInitialMission();
 }
 
-void AVillain::Interact()
+void AVillain::Interact(EInteractionEffect Effect)
 {
 	if (VillainWidget)
 	{
-		if (CurrentMission.bIsCompleted)
+		if (CurrentMission.RequiredEffect == Effect || CurrentMission.RequiredEffect == EInteractionEffect::None)
 		{
-			DeliverMission();
-		}
-		else
-		{
-			GiveMission();
+			if (CurrentMission.bIsCompleted)
+			{
+				if (CurrentMission.RequiredEffect == EInteractionEffect::None)
+				{
+					NextMission();
+				}
+			} else
+			{
+				if (CurrentMission.RequiredEffect != EInteractionEffect::None)
+				{
+					CurrentMission.bIsCompleted = true;
+					NextMission();
+				}
+			}
+			// TODO: "Deliver" is showing even if the player is not carrying an object.
+			Tooltip = CurrentMission.RequiredEffect == EInteractionEffect::None ? Tooltip = TEXT("Answer") : TEXT("Deliver");
 		}
 	}
 }
@@ -129,7 +149,7 @@ void AVillain::GiveMission()
 	}
 }
 
-void AVillain::DeliverMission()
+void AVillain::NextMission()
 {
 	GetWorldTimerManager().PauseTimer(TickingTimerHandle);
 
