@@ -7,6 +7,7 @@
 #include "Logging/LogMacros.h"
 #include "DoAsItSaysCharacter.generated.h"
 
+class AVillain;
 class APickUpObject;
 class IInteractive;
 class UInputComponent;
@@ -51,7 +52,7 @@ private:
 	int InteractionRange = 100;
 
 	bool WasCarryingObject = false;
-
+	
 	IInteractive* CurrentInteractiveActor;
 	/// the Pick Up Actor the Character is currently looking at
 	UPROPERTY(VisibleInstanceOnly)

@@ -25,6 +25,7 @@ public:
 	virtual void OnEnterRange() override;
 	void MarkMissionAsCompleted(int id);
 	void MarkMissionAsUncompleted(int id);
+	EInteractionEffect GetRequiredEffect() const;
 
 protected:
 	virtual void BeginPlay() override;

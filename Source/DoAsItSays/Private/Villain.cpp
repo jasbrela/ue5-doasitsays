@@ -85,8 +85,7 @@ void AVillain::Interact(EInteractionEffect Effect)
 					NextMission();
 				}
 			}
-			// TODO: "Deliver" is showing even if the player is not carrying an object.
-			Tooltip = CurrentMission.RequiredEffect == EInteractionEffect::None ? Tooltip = TEXT("Answer") : TEXT("Deliver");
+			//Tooltip = CurrentMission.RequiredEffect == EInteractionEffect::None ? Tooltip = TEXT("Answer") : TEXT("Deliver");
 		}
 	}
 }
@@ -194,4 +193,9 @@ void AVillain::MarkMissionAsUncompleted(int id)
 		CurrentMission.bIsCompleted = false;
 		bIsInteractive = false;
 	}
+}
+
+EInteractionEffect AVillain::GetRequiredEffect() const
+{
+	return CurrentMission.RequiredEffect;
 }

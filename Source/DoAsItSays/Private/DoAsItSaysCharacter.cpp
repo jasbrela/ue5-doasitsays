@@ -11,6 +11,7 @@
 #include "InteractionWidget.h"
 #include "Interactive.h"
 #include "PickUpObject.h"
+#include "Villain.h"
 #include "Blueprint/UserWidget.h"
 #include "Engine/LocalPlayer.h"
 #include "Engine/SkeletalMeshSocket.h"
@@ -212,8 +213,23 @@ void ADoAsItSaysCharacter::SetInteractiveObject(IInteractive* Interactive)
 		{
 			CurrentInteractiveActor->OnEnterRange();
 		}
+		
+		FString TooltipText = Interactive != nullptr ? TEXT("[E] " + Interactive->Tooltip) : TEXT("");
+		
+		if (CarriedPickUpActor)
+		{
+			if (const AVillain* Villain = Cast<AVillain>(CurrentInteractiveActor))
+			{
 
-		const FString TooltipText = Interactive != nullptr ? TEXT("[E] " + Interactive->Tooltip) : TEXT("");
+				if (Villain->GetRequiredEffect() == CarriedPickUpActor->Effect)
+				{
+					TooltipText = TEXT("[E] Deliver");
+				} else
+				{
+					CurrentInteractiveActor = nullptr;
+				}
+			}
+		}
 		InteractionWidget->ToggleTooltip(CurrentInteractiveActor != nullptr, TooltipText);
 	}
 }
