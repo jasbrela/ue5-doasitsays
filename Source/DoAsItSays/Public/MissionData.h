@@ -21,6 +21,9 @@ public:
 	TEnumAsByte<EInteractionEffect> RequiredEffect;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TEnumAsByte<EVillainExpression> ExpressionAfterCompletion;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int DialogueDurationInSeconds;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

@@ -52,6 +52,7 @@ private:
 	int InteractionRange = 100;
 
 	bool WasCarryingObject = false;
+	AVillain* Villain;
 	
 	IInteractive* CurrentInteractiveActor;
 	/// the Pick Up Actor the Character is currently looking at

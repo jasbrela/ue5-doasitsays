@@ -4,20 +4,21 @@
 #include "Villain.h"
 
 #include "Circuit.h"
-#include "Components/CapsuleComponent.h"
 #include "MissionData.h"
+#include "Shadow.h"
 #include "VillainWidget.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/AudioComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 AVillain::AVillain()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
-	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	TickingAudio = CreateDefaultSubobject<UAudioComponent>(TEXT("TickingAudio"));
 	ShadowWhispers = CreateDefaultSubobject<UAudioComponent>(TEXT("WhispersAudio"));
+	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	Capsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CapsuleCollision"));
 	
 	RootComponent = Mesh;
@@ -27,14 +28,10 @@ AVillain::AVillain()
 	
 }
 
-void AVillain::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-}
+void AVillain::Tick(float DeltaTime) { Super::Tick(DeltaTime); }
 
 void AVillain::BeginPlay()
 {
-	Super::BeginPlay();
 	const TArray<FName> Names = Table->GetRowNames();
 	const FString Context = TEXT("");
 	
@@ -69,6 +66,17 @@ void AVillain::BeginPlay()
 	TArray<AActor*> Actors;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), CircuitClass, Actors);
 	Circuit = Cast<ACircuit>(Actors[0]);
+	
+	Actors.Empty();
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), OtherShadowsClass, Actors);
+	for (AActor* Actor : Actors)
+	{
+		if (AShadow* Shadow = Cast<AShadow>(Actor))
+		{
+			OtherShadows.Add(Shadow);
+		}
+	}
+	
 }
 
 void AVillain::Interact(EInteractionEffect Effect)
@@ -168,6 +176,14 @@ void AVillain::GiveMission()
 
 void AVillain::NextMission()
 {
+	UMaterialInterface* ExpressionMaterial = SwitchExpression(CurrentMission.ExpressionAfterCompletion);
+	
+	for (AShadow* Shadow : OtherShadows)
+	{
+		Shadow->SwitchExpression(ExpressionMaterial);
+		Shadow->OnMissionCompleted(CurrentMission.ID);
+	}
+	
 	GetWorldTimerManager().PauseTimer(TickingTimerHandle);
 
 	TickingAudio->FadeOut(2, 0);
@@ -179,6 +195,21 @@ void AVillain::NextMission()
 void AVillain::JumpScare()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Game Over"));
+}
+
+UMaterialInterface* AVillain::SwitchExpression(EVillainExpression Expression)
+{
+	if (ExpressionMaterials.Num() > Expression)
+	{
+		if (ExpressionMaterials[Expression])
+		{
+			Mesh->SetMaterial(0, ExpressionMaterials[Expression]);
+			return ExpressionMaterials[Expression];
+		}
+	}
+	
+	UE_LOG(LogTemp, Warning, TEXT("Failed to set Villain's Expression"));
+	return Mesh->GetMaterial(0);
 }
 
 void AVillain::OnDialogueFinished()

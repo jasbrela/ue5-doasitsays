@@ -40,3 +40,8 @@ void APickUpObject::OnDropObject()
 	Box->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	Box->SetSimulatePhysics(true);
 }
+
+void APickUpObject::OnDeliverObject()
+{
+	Destroy();
+}

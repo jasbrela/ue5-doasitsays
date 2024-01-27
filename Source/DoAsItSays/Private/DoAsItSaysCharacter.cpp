@@ -120,6 +120,22 @@ void ADoAsItSaysCharacter::Interact(const FInputActionValue& Value)
 					Effect = CarriedPickUpActor->Effect;
 				}
 				
+				if (Villain)
+				{
+					if (Villain->GetRequiredEffect() == Effect && Effect != EInteractionEffect::None)
+					{
+						APickUpObject* Temp = CarriedPickUpActor;
+						Drop(FInputActionValue(true));
+						if (Temp)
+						{
+							Temp->OnDeliverObject();
+						} else
+						{
+							UE_LOG(LogTemp, Warning, TEXT("didnt work"));
+						}
+					}
+				}
+
 				CurrentInteractiveActor->Interact(Effect);
 			}
 		}
@@ -212,24 +228,37 @@ void ADoAsItSaysCharacter::SetInteractiveObject(IInteractive* Interactive)
 		if (CurrentInteractiveActor != nullptr)
 		{
 			CurrentInteractiveActor->OnEnterRange();
-		}
-		
-		FString TooltipText = Interactive != nullptr ? TEXT("[E] " + Interactive->Tooltip) : TEXT("");
-		
-		if (CarriedPickUpActor)
-		{
-			if (const AVillain* Villain = Cast<AVillain>(CurrentInteractiveActor))
+			
+			if (Villain == nullptr)
 			{
-
-				if (Villain->GetRequiredEffect() == CarriedPickUpActor->Effect)
+				if (AVillain* CurrentActor = Cast<AVillain>(CurrentInteractiveActor))
 				{
-					TooltipText = TEXT("[E] Deliver");
-				} else
-				{
-					CurrentInteractiveActor = nullptr;
+					Villain = CurrentActor;
 				}
 			}
 		}
+		
+		FString TooltipText = CurrentInteractiveActor != nullptr ? TEXT("[E] " + Interactive->Tooltip) : TEXT("");
+
+		if (Villain != nullptr && CurrentInteractiveActor == Villain)
+		{
+			const EInteractionEffect RequiredEffect = Villain->GetRequiredEffect();
+			
+			if (RequiredEffect != EInteractionEffect::None)
+			{
+				if (CarriedPickUpActor)
+				{
+					if (RequiredEffect == CarriedPickUpActor->Effect)
+					{
+						TooltipText = TEXT("[E] Deliver");
+					} else
+					{
+						CurrentInteractiveActor = nullptr;
+					}
+				}
+			}
+		}
+
 		InteractionWidget->ToggleTooltip(CurrentInteractiveActor != nullptr, TooltipText);
 	}
 }

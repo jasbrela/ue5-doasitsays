@@ -9,6 +9,7 @@
 #include "MissionData.h"
 #include "Villain.generated.h"
 
+class AShadow;
 class ACircuit;
 class UVillainWidget;
 class UCapsuleComponent;
@@ -54,10 +55,10 @@ private:
 	UPROPERTY(EditDefaultsOnly)
 	UCapsuleComponent* Capsule;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category= "Audio")
 	UAudioComponent* TickingAudio;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category= "Audio")
 	UAudioComponent* ShadowWhispers;
 
 	UPROPERTY(EditDefaultsOnly)
@@ -66,6 +67,17 @@ private:
 	UPROPERTY(VisibleInstanceOnly)
 	ACircuit* Circuit;
 	
+	UPROPERTY(EditDefaultsOnly)
+	TArray<UMaterialInterface*> ExpressionMaterials;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<AShadow> OtherShadowsClass;
+	
+	UPROPERTY(VisibleInstanceOnly)
+	TArray<AShadow*> OtherShadows;
+
+	
+	UMaterialInterface* SwitchExpression(EVillainExpression Expression);
 	void GiveMission();
 	void NextMission();
 	void JumpScare();

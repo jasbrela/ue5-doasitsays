@@ -6,7 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "PickUpObject.generated.h"
 
-enum EInteractionEffect : int;
+enum EInteractionEffect;
 class UBoxComponent;
 
 UCLASS()
@@ -19,6 +19,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	void OnPickUpObject();
 	void OnDropObject();
+	void OnDeliverObject();
 	
 	UPROPERTY(EditDefaultsOnly)
 	TEnumAsByte<EInteractionEffect> Effect;

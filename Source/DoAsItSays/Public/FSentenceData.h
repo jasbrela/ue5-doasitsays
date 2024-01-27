@@ -12,9 +12,6 @@ struct FSentenceData
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString Text = TEXT("N/A");
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TEnumAsByte<EVillainExpression> Expression;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int Seconds;
