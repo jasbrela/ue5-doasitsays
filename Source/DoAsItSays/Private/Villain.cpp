@@ -3,6 +3,7 @@
 
 #include "Villain.h"
 
+#include "Circuit.h"
 #include "Components/CapsuleComponent.h"
 #include "MissionData.h"
 #include "VillainWidget.h"
@@ -18,11 +19,12 @@ AVillain::AVillain()
 	TickingAudio = CreateDefaultSubobject<UAudioComponent>(TEXT("TickingAudio"));
 	ShadowWhispers = CreateDefaultSubobject<UAudioComponent>(TEXT("WhispersAudio"));
 	Capsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CapsuleCollision"));
-
+	
 	RootComponent = Mesh;
 	Capsule->SetupAttachment(RootComponent);
 	TickingAudio->SetupAttachment(RootComponent);
 	ShadowWhispers->SetupAttachment(RootComponent);
+	
 }
 
 void AVillain::Tick(float DeltaTime)
@@ -63,6 +65,10 @@ void AVillain::BeginPlay()
 	}
 
 	GiveInitialMission();
+
+	TArray<AActor*> Actors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), CircuitClass, Actors);
+	Circuit = Cast<ACircuit>(Actors[0]);
 }
 
 void AVillain::Interact(EInteractionEffect Effect)
@@ -71,6 +77,11 @@ void AVillain::Interact(EInteractionEffect Effect)
 	{
 		if (CurrentMission.RequiredEffect == Effect || CurrentMission.RequiredEffect == EInteractionEffect::None)
 		{
+			if (CurrentMission.ID == 2)
+			{
+				CurrentMission.bIsCompleted = true;
+			}
+			
 			if (CurrentMission.bIsCompleted)
 			{
 				if (CurrentMission.RequiredEffect == EInteractionEffect::None)
@@ -120,10 +131,17 @@ void AVillain::GiveMission()
 {
 	ShadowWhispers->FadeIn(3);
 	CurrentMission = Missions[CurrentMissionIndex];
+	
+	UE_LOG(LogTemp, Warning, TEXT("Started Mission: %d"), CurrentMission.ID);
 
 	MarkMissionAsUncompleted(CurrentMission.ID);
 	CurrentTimerSeconds = CurrentMission.TimeFrameInSeconds;
 
+	if (CurrentMission.ID == 2) // Hardcoded :(
+	{
+		Circuit->Enable();
+	}
+	
 	if (CurrentTimerSeconds > 0)
 	{
 		TickingAudio->FadeIn(2);
@@ -169,13 +187,8 @@ void AVillain::OnDialogueFinished()
 	ShadowWhispers->FadeOut(3, 0);
 }
 
-void AVillain::OnExitRange()
-{
-}
-
-void AVillain::OnEnterRange()
-{
-}
+void AVillain::OnExitRange() { }
+void AVillain::OnEnterRange() { }
 
 void AVillain::MarkMissionAsCompleted(int id)
 {

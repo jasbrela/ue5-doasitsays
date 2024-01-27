@@ -7,8 +7,6 @@
 #include "UObject/Interface.h"
 #include "Interactive.generated.h"
 
-enum EInteractionEffect : int;
-
 UINTERFACE(MinimalAPI)
 class UInteractive : public UInterface
 {

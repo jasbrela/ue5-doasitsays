@@ -9,6 +9,7 @@
 #include "MissionData.h"
 #include "Villain.generated.h"
 
+class ACircuit;
 class UVillainWidget;
 class UCapsuleComponent;
 
@@ -58,6 +59,12 @@ private:
 
 	UPROPERTY(EditDefaultsOnly)
 	UAudioComponent* ShadowWhispers;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<ACircuit> CircuitClass;
+
+	UPROPERTY(VisibleInstanceOnly)
+	ACircuit* Circuit;
 	
 	void GiveMission();
 	void NextMission();
