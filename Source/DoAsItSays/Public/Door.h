@@ -17,8 +17,7 @@ class DOASITSAYS_API ADoor : public AActor, public IAffectedByMission
 public:	
 	ADoor();
 	virtual void Tick(float DeltaTime) override;
-	virtual void OnMissionCompleted(int ID) override;
-
+	virtual void OnMissionStatusChanged(int ID, bool Completed = true) override;
 
 protected:
 	virtual void BeginPlay() override;

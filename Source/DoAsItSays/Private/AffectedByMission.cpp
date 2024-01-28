@@ -4,4 +4,4 @@
 #include "AffectedByMission.h"
 
 // Add default functionality here for any IAffectedByMission functions that are not pure virtual.
-void IAffectedByMission::OnMissionCompleted(int ID) { }
+void IAffectedByMission::OnMissionStatusChanged(int ID, bool Completed) { }

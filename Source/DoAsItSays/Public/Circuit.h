@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AffectedByMission.h"
 #include "Interactive.h"
 #include "GameFramework/Actor.h"
 #include "Circuit.generated.h"
@@ -12,7 +13,7 @@ class ALight;
 class AVillain;
 
 UCLASS()
-class DOASITSAYS_API ACircuit : public AActor, public IInteractive
+class DOASITSAYS_API ACircuit : public AActor, public IInteractive, public IAffectedByMission
 {
 	GENERATED_BODY()
 	
@@ -20,6 +21,7 @@ public:
 	// Sets default values for this actor's properties
 	ACircuit();
 	virtual void Interact(EInteractionEffect Effect = EInteractionEffect::None) override;
+	virtual void OnMissionStatusChanged(int ID, bool Completed = true) override;
 	virtual void OnExitRange() override;
 	virtual void OnEnterRange() override;
 	virtual void Tick(float DeltaTime) override;
@@ -30,6 +32,12 @@ protected:
 
 private:
 	bool bIsOn;
+	
+	UPROPERTY(EditAnywhere)
+	int AffectedAfterMissionCompletedID = 0;
+
+	UPROPERTY(EditDefaultsOnly, Category= "Audio")
+	UAudioComponent* SwitchAudio;
 	
 	UPROPERTY(EditInstanceOnly)
 	TArray<ALamp*> Lamps;

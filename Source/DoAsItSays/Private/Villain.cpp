@@ -132,7 +132,6 @@ void AVillain::UpdateTimerUI()
 void AVillain::GiveInitialMission()
 {
 	GiveMission();
-	MarkMissionAsCompleted(0);
 	bIsInteractive = false;
 }
 
@@ -176,36 +175,7 @@ void AVillain::GiveMission()
 }
 
 void AVillain::NextMission()
-{
-	UMaterialInterface* ExpressionMaterial = SwitchExpression(CurrentMission.ExpressionAfterCompletion);
-
-	const bool RegisterShadows = OtherShadows.Num() == 0;
-	
-	for (IAffectedByMission* Affected : AffectedByMissionActors)
-	{
-		if (RegisterShadows)
-		{
-			if (AShadow* Shadow = Cast<AShadow>(Affected))
-			{
-				OtherShadows.Add(Shadow);
-			}
-		}
-
-		if (Affected)
-		{
-			Affected->OnMissionCompleted(CurrentMission.ID);
-		}
-		
-	}
-	
-	for (AShadow* Shadow : OtherShadows)
-	{
-		if (Shadow)
-		{
-			Shadow->SwitchExpression(ExpressionMaterial);
-		}
-	}
-	
+{	
 	GetWorldTimerManager().PauseTimer(TickingTimerHandle);
 
 	TickingAudio->FadeOut(2, 0);
@@ -216,7 +186,7 @@ void AVillain::NextMission()
 
 void AVillain::JumpScare()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Game Over"));
+	// TODO: Game Over
 }
 
 UMaterialInterface* AVillain::SwitchExpression(EVillainExpression Expression)
@@ -241,10 +211,49 @@ void AVillain::OnDialogueFinished()
 }
 
 void AVillain::OnExitRange() { }
-void AVillain::OnEnterRange() { }
+void AVillain::OnEnterRange()
+{
+	if (CurrentMission.ID == 0)
+	{
+		MarkMissionAsCompleted(0, true);
+	}
+}
 
 void AVillain::MarkMissionAsCompleted(const int ID, const bool ForceNextMission)
 {
+	UE_LOG(LogTemp, Warning, TEXT("Mark mission as completed: %d"), ID);
+
+	// Initialize Variables
+	UMaterialInterface* ExpressionMaterial = SwitchExpression(CurrentMission.ExpressionAfterCompletion);
+	const bool RegisterShadows = OtherShadows.Num() == 0;
+	
+	for (IAffectedByMission* Affected : AffectedByMissionActors)
+	{
+		if (RegisterShadows)
+		{
+			if (AShadow* Shadow = Cast<AShadow>(Affected))
+			{
+				OtherShadows.Add(Shadow);
+			}
+		}
+
+		if (Affected)
+		{
+			// Update Affected Actors
+			Affected->OnMissionStatusChanged(CurrentMission.ID);
+		}
+	}
+
+	// Switch Expression
+	for (AShadow* Shadow : OtherShadows)
+	{
+		if (Shadow)
+		{
+			Shadow->SwitchExpression(ExpressionMaterial);
+		}
+	}
+
+	// Finally mark mission as completed
 	if (CurrentMission.ID == ID)
 	{
 		CurrentMission.bIsCompleted = true;

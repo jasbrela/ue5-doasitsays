@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AffectedByMission.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
 #include "DoAsItSaysCharacter.generated.h"
@@ -21,7 +22,7 @@ struct FInputActionValue;
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
 UCLASS(config=Game)
-class ADoAsItSaysCharacter : public ACharacter
+class ADoAsItSaysCharacter : public ACharacter, public IAffectedByMission
 {
 	GENERATED_BODY()
 public:
@@ -33,6 +34,7 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
+	virtual void OnMissionStatusChanged(int ID, bool Completed = true) override;
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 	void Interact(const FInputActionValue& Value);
@@ -48,10 +50,20 @@ protected:
 	UInteractionWidget* InteractionWidget;
 
 private:
+	UPROPERTY(EditAnywhere)
+	int AffectedAfterMissionCompletedID = 0;
+	
 	UPROPERTY(EditDefaultsOnly, Category=Interaction)
 	int InteractionRange = 100;
 
+	UPROPERTY(EditDefaultsOnly, Category=Interaction)
+	int MaxInteractionRange = 1000;
+	
+	int CurrentInteractionRange = 0;
+
 	bool WasCarryingObject = false;
+	
+	UPROPERTY()
 	AVillain* Villain;
 	
 	IInteractive* CurrentInteractiveActor;

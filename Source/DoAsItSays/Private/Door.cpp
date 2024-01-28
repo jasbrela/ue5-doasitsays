@@ -28,11 +28,14 @@ void ADoor::Tick(float DeltaTime)
 
 }
 
-void ADoor::OnMissionCompleted(int ID)
+void ADoor::OnMissionStatusChanged(int ID, bool Completed)
 {
 	if (ID == this->AffectedAfterMissionCompletedID)
 	{
-		Mesh->AddLocalRotation(FRotator(0, AddedLocalRollAfterMission, 0));
+		if (Completed)
+		{
+			Mesh->AddLocalRotation(FRotator(0, AddedLocalRollAfterMission, 0));
+		}
 	}
 }
 

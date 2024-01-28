@@ -19,7 +19,7 @@ class DOASITSAYS_API AShadow : public AActor, public IAffectedByMission
 public:	
 	AShadow();
 	virtual void Tick(float DeltaTime) override;
-	virtual void OnMissionCompleted(int ID) override;
+	virtual void OnMissionStatusChanged(int ID, bool Completed = true) override;
 	void SwitchExpression(UMaterialInterface* ExpressionMaterial);
 	void Enable();
 	void Disable();

@@ -14,11 +14,11 @@ AShadow::AShadow()
 }
 
 
-void AShadow::OnMissionCompleted(int ID)
+void AShadow::OnMissionStatusChanged(int ID, bool Completed)
 {
 	if (ID == this->AffectedAfterMissionCompletedID)
 	{
-		Enable();
+		Completed ? Enable() : Disable();
 	}
 }
 

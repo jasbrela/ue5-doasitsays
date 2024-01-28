@@ -5,26 +5,28 @@
 
 #include "Lamp.h"
 #include "Villain.h"
-#include "Components/LightComponent.h"
-#include "Engine/Light.h"
+#include "Components/AudioComponent.h"
 
 ACircuit::ACircuit()
 {
+	SwitchAudio = CreateDefaultSubobject<UAudioComponent>(TEXT("SwitchSFX"));
 	CircuitMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CircuitMesh"));
 	CircuitDoorMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CircuitDoorMesh"));
 	
 	RootComponent = CircuitMesh;
 	CircuitDoorMesh->SetupAttachment(RootComponent);
+	SwitchAudio->SetupAttachment(RootComponent);
 	
 	PrimaryActorTick.bCanEverTick = false;
 	bIsInteractive = false;
-	
 	bIsOn = true;
 }
 
 void ACircuit::Interact(EInteractionEffect Effect)
 {
 	bIsOn = !bIsOn;
+
+	SwitchAudio->Play();
 
 	if (Lamps.Num() > 0)
 	{
@@ -37,6 +39,14 @@ void ACircuit::Interact(EInteractionEffect Effect)
 		}
 	}
 	
+}
+
+void ACircuit::OnMissionStatusChanged(int ID, bool Completed)
+{
+	if (AffectedAfterMissionCompletedID == ID)
+	{
+		bIsInteractive = !Completed;
+	}
 }
 
 void ACircuit::BeginPlay()

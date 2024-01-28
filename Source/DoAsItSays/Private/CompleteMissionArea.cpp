@@ -37,11 +37,11 @@ void ACompleteMissionArea::Tick(float DeltaTime)
 }
 
 
-void ACompleteMissionArea::OnMissionCompleted(int ID)
+void ACompleteMissionArea::OnMissionStatusChanged(int ID, bool Completed)
 {
 	if (AffectedAfterMissionCompletedID == ID)
 	{
-		Box->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		Box->SetCollisionEnabled(Completed ? ECollisionEnabled::QueryAndPhysics : ECollisionEnabled::NoCollision);
 	}
 }
 

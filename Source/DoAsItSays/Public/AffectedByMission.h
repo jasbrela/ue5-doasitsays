@@ -22,5 +22,5 @@ class DOASITSAYS_API IAffectedByMission
 	GENERATED_BODY()
 
 public:
-	virtual void OnMissionCompleted(int ID);
+	virtual void OnMissionStatusChanged(int ID, bool Completed = true);
 };

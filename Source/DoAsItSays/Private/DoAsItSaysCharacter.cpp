@@ -10,11 +10,11 @@
 #include "InputActionValue.h"
 #include "InteractionWidget.h"
 #include "Interactive.h"
+#include "LookDeathZone.h"
 #include "PickUpObject.h"
 #include "Villain.h"
 #include "Blueprint/UserWidget.h"
 #include "Engine/LocalPlayer.h"
-#include "Engine/SkeletalMeshSocket.h"
 #include "Kismet/GameplayStatics.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
@@ -36,6 +36,7 @@ ADoAsItSaysCharacter::ADoAsItSaysCharacter()
 	Mesh1P->bCastDynamicShadow = false;
 	Mesh1P->CastShadow = false;
 	Mesh1P->SetRelativeLocation(FVector(-30.f, 0.f, -150.f));
+	CurrentInteractionRange = InteractionRange;
 }
 
 void ADoAsItSaysCharacter::BeginPlay()
@@ -70,6 +71,14 @@ void ADoAsItSaysCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this,
 		                                   &ADoAsItSaysCharacter::Interact);
 		EnhancedInputComponent->BindAction(DropAction, ETriggerEvent::Triggered, this, &ADoAsItSaysCharacter::Drop);
+	}
+}
+
+void ADoAsItSaysCharacter::OnMissionStatusChanged(int ID, bool Completed)
+{
+	if (AffectedAfterMissionCompletedID == ID)
+	{
+		CurrentInteractionRange = Completed ? MaxInteractionRange : InteractionRange;
 	}
 }
 
@@ -172,7 +181,7 @@ void ADoAsItSaysCharacter::InteractionLineTrace()
 		QueryParams.AddIgnoredActor(this);
 
 		FVector TraceStart = GetFirstPersonCameraComponent()->GetComponentLocation();
-		FVector TraceEnd = TraceStart + GetFirstPersonCameraComponent()->GetForwardVector() * InteractionRange;
+		FVector TraceEnd = TraceStart + GetFirstPersonCameraComponent()->GetForwardVector() * CurrentInteractionRange;
 
 		World->LineTraceSingleByChannel(Hit, TraceStart, TraceEnd, ECollisionChannel::ECC_Visibility, QueryParams);
 
@@ -199,6 +208,10 @@ void ADoAsItSaysCharacter::InteractionLineTrace()
 			{
 				SetInteractiveObject(nullptr);
 				SetPickUpObject(PickUpObject);
+			}
+			else if (Cast<ALookDeathZone>(ActorHit))
+			{
+				// TODO: Game Over
 			}
 			else
 			{

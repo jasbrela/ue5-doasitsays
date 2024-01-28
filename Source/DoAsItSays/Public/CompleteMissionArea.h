@@ -18,7 +18,7 @@ class DOASITSAYS_API ACompleteMissionArea : public AActor, public IAffectedByMis
 public:	
 	ACompleteMissionArea();
 	virtual void Tick(float DeltaTime) override;
-    virtual void OnMissionCompleted(int ID) override;
+    virtual void OnMissionStatusChanged(int ID, bool Completed = true) override;
 
 protected:
 	virtual void BeginPlay() override;
