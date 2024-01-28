@@ -14,5 +14,5 @@ public:
 	FString Text = TEXT("N/A");
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int Seconds;
+	int Seconds = 0;
 };

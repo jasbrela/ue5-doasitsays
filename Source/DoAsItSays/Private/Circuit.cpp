@@ -26,13 +26,15 @@ void ACircuit::Interact(EInteractionEffect Effect)
 {
 	bIsOn = !bIsOn;
 
+	bIsOn ? Villain->MarkMissionAsUncompleted(2) : Villain->MarkMissionAsCompleted(2, false);
+
 	SwitchAudio->Play();
 
 	if (Lamps.Num() > 0)
 	{
 		for (ALamp* Lamp : Lamps)
 		{
-			if (IsValid(Lamp))
+			if (Lamp)
 			{
 				Lamp->ToggleCircuit(bIsOn);
 			}

@@ -45,8 +45,7 @@ protected:
 
 	
 private:
-	UPROPERTY(VisibleInstanceOnly)
-	TArray<FMissionData> Missions;
+	TArray<FMissionData*> Missions;
 
 	UPROPERTY(EditDefaultsOnly)
 	UDataTable* Table;
@@ -66,7 +65,7 @@ private:
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<ACircuit> CircuitClass;
 
-	UPROPERTY(VisibleInstanceOnly)
+	UPROPERTY(EditInstanceOnly)
 	ACircuit* Circuit;
 	
 	UPROPERTY(EditDefaultsOnly)
@@ -75,7 +74,7 @@ private:
 	UPROPERTY(EditDefaultsOnly)
 	TArray<IAffectedByMission*> AffectedByMissionActors;
 	
-	UPROPERTY(VisibleInstanceOnly)
+	UPROPERTY(EditInstanceOnly)
 	TArray<AShadow*> OtherShadows;
 
 	
@@ -84,12 +83,11 @@ private:
 	void NextMission();
 	void JumpScare();
 	void OnDialogueFinished();
-	void UpdateTimerUI();
+	void OnTimerEnd();
 	void GiveInitialMission();
-	int CurrentTimerSeconds = 0;
-	FMissionData CurrentMission;
+	FMissionData* CurrentMission;
 	FTimerHandle TickingTimerHandle;
 	FTimerHandle ShadowWhispersTimerHandle;
-	FTimerDelegate UpdateTimerUIDelegate;
+	FTimerDelegate TimerDelegate;
 	FTimerDelegate StopWhispersDelegate;
 };

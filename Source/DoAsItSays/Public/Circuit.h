@@ -26,12 +26,14 @@ public:
 	virtual void OnEnterRange() override;
 	virtual void Tick(float DeltaTime) override;
 	void Enable();
+	bool bIsOn;
 	
 protected:
 	virtual void BeginPlay() override;
 
 private:
-	bool bIsOn;
+	UPROPERTY(EditInstanceOnly)
+	AVillain* Villain;
 	
 	UPROPERTY(EditAnywhere)
 	int AffectedAfterMissionCompletedID = 0;

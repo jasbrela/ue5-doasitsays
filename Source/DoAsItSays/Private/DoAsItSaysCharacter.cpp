@@ -1,7 +1,6 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "DoAsItSaysCharacter.h"
-#include "Animation/AnimInstance.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -14,7 +13,6 @@
 #include "PickUpObject.h"
 #include "Villain.h"
 #include "Blueprint/UserWidget.h"
-#include "Engine/LocalPlayer.h"
 #include "Kismet/GameplayStatics.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
@@ -36,13 +34,14 @@ ADoAsItSaysCharacter::ADoAsItSaysCharacter()
 	Mesh1P->bCastDynamicShadow = false;
 	Mesh1P->CastShadow = false;
 	Mesh1P->SetRelativeLocation(FVector(-30.f, 0.f, -150.f));
-	CurrentInteractionRange = InteractionRange;
 }
 
 void ADoAsItSaysCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	CurrentInteractionRange = InteractionRange;
+	
 	UGameplayStatics::GetPlayerCameraManager(this, 0)->StartCameraShake(CameraShake);
 
 	PrimaryActorTick.bCanEverTick = true;
@@ -212,6 +211,7 @@ void ADoAsItSaysCharacter::InteractionLineTrace()
 			else if (Cast<ALookDeathZone>(ActorHit))
 			{
 				// TODO: Game Over
+				UGameplayStatics::OpenLevel(this, TEXT("BadEnding_Level"));
 			}
 			else
 			{

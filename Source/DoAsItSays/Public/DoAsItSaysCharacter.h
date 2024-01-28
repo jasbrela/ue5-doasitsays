@@ -54,10 +54,10 @@ private:
 	int AffectedAfterMissionCompletedID = 0;
 	
 	UPROPERTY(EditDefaultsOnly, Category=Interaction)
-	int InteractionRange = 100;
+	int InteractionRange;
 
 	UPROPERTY(EditDefaultsOnly, Category=Interaction)
-	int MaxInteractionRange = 1000;
+	int MaxInteractionRange;
 	
 	int CurrentInteractionRange = 0;
 

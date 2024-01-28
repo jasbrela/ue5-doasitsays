@@ -37,12 +37,12 @@ void AVillain::BeginPlay()
 	
 	for (int i = 0; i < Names.Num(); i++)
 	{
-		const FMissionData* Mission = Table->FindRow<FMissionData>(Names[i], Context);
-		Missions.Add(*Mission);
+		FMissionData* Mission = Table->FindRow<FMissionData>(Names[i], Context);
+		Missions.Add(Mission);
 	}
 	
 	ShadowWhispers->bAlwaysPlay = true;
-	UpdateTimerUIDelegate = FTimerDelegate::CreateUObject(this, &AVillain::UpdateTimerUI);
+	TimerDelegate = FTimerDelegate::CreateUObject(this, &AVillain::OnTimerEnd);
 	StopWhispersDelegate = FTimerDelegate::CreateUObject(this, &AVillain::OnDialogueFinished);
 
 	Tooltip = TEXT("Answer");
@@ -64,8 +64,6 @@ void AVillain::BeginPlay()
 	GiveInitialMission();
 
 	TArray<AActor*> Actors;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), CircuitClass, Actors);
-	Circuit = Cast<ACircuit>(Actors[0]);
 	
 	Actors.Empty();
 	UGameplayStatics::GetAllActorsWithInterface(GetWorld(), UAffectedByMission::StaticClass(), Actors);
@@ -84,49 +82,51 @@ void AVillain::Interact(EInteractionEffect Effect)
 {
 	if (VillainWidget)
 	{
-		if (CurrentMission.RequiredEffect == Effect || CurrentMission.RequiredEffect == EInteractionEffect::None)
+		if (CurrentMission)
 		{
-			if (CurrentMission.ID == 2)
+			if (CurrentMission->RequiredEffect == Effect || CurrentMission->RequiredEffect == EInteractionEffect::None)
 			{
-				CurrentMission.bIsCompleted = true;
-			}
-			
-			if (CurrentMission.bIsCompleted)
-			{
-				if (CurrentMission.RequiredEffect == EInteractionEffect::None)
+				// Mission "Power Source"
+				if (CurrentMission->ID == 2)
 				{
-					NextMission();
+					Circuit->bIsOn ? MarkMissionAsUncompleted(CurrentMission->ID) : MarkMissionAsCompleted(CurrentMission->ID, false);
 				}
-			} else
-			{
-				if (CurrentMission.RequiredEffect != EInteractionEffect::None)
+				
+				if (CurrentMission->bIsCompleted)
 				{
-					CurrentMission.bIsCompleted = true;
-					NextMission();
+					if (CurrentMission->RequiredEffect == EInteractionEffect::None)
+					{
+						NextMission();
+					}
 				}
+				else
+				{
+					if (CurrentMission->RequiredEffect != EInteractionEffect::None)
+					{
+						MarkMissionAsCompleted(CurrentMission->ID, true);
+					}
+				}
+				//Tooltip = CurrentMission->RequiredEffect == EInteractionEffect::None ? Tooltip = TEXT("Answer") : TEXT("Deliver");
 			}
-			//Tooltip = CurrentMission.RequiredEffect == EInteractionEffect::None ? Tooltip = TEXT("Answer") : TEXT("Deliver");
 		}
 	}
 }
 
-void AVillain::UpdateTimerUI()
+void AVillain::OnTimerEnd()
 {
-	if (ShadowWhispers->IsPlaying())
-	{
-		OnDialogueFinished();
-	}
-
-	if (CurrentTimerSeconds <= 0)
+	if (VillainWidget)
 	{
 		VillainWidget->Hide();
-		JumpScare();
+	}
+	
+	JumpScare();
+
+	if (TickingAudio)
+	{
 		TickingAudio->Stop();
 	}
 
-	VillainWidget->ShowTimer(CurrentTimerSeconds);
-
-	CurrentTimerSeconds--;
+	//VillainWidget->ShowTimer(CurrentTimerSeconds);
 }
 
 void AVillain::GiveInitialMission()
@@ -137,40 +137,58 @@ void AVillain::GiveInitialMission()
 
 void AVillain::GiveMission()
 {
-	ShadowWhispers->FadeIn(3);
+	if (ShadowWhispers)
+	{
+		ShadowWhispers->FadeIn(3);
+	}
+
+	if (CurrentMissionIndex >= Missions.Num())
+	{
+		UGameplayStatics::OpenLevel(this, TEXT("GoodEnding_Level"));
+		return;
+	}
+	
 	CurrentMission = Missions[CurrentMissionIndex];
 	
-	UE_LOG(LogTemp, Warning, TEXT("Started Mission: %d"), CurrentMission.ID);
+	UE_LOG(LogTemp, Warning, TEXT("Started Mission: %d"), CurrentMission->ID);
 
-	MarkMissionAsUncompleted(CurrentMission.ID);
-	CurrentTimerSeconds = CurrentMission.TimeFrameInSeconds;
+	MarkMissionAsUncompleted(CurrentMission->ID);
 
-	if (CurrentMission.ID == 2) // Hardcoded :(
+	if (CurrentMission)
 	{
-		Circuit->Enable();
-	}
-	
-	if (CurrentTimerSeconds > 0)
-	{
-		TickingAudio->FadeIn(2);
+		if (CurrentMission->ID == 2) // Hardcoded :(
+		{
+			Circuit->Enable();
+		}
 
-		GetWorldTimerManager().ClearTimer(TickingTimerHandle);
+		if (TickingAudio)
+		{
+			if (!TickingAudio->IsPlaying())
+			{
+				TickingAudio->FadeIn(2);
 
-		GetWorldTimerManager().SetTimer(TickingTimerHandle, UpdateTimerUIDelegate, 1.0f, true,
-		                                static_cast<float>(CurrentMission.DialogueDurationInSeconds));
-	}
+				GetWorldTimerManager().ClearTimer(TickingTimerHandle);
 
-	if (CurrentMission.DialogueDurationInSeconds > 0)
-	{
-		GetWorldTimerManager().ClearTimer(ShadowWhispersTimerHandle);
+				GetWorldTimerManager().SetTimer(TickingTimerHandle, TimerDelegate, 0, false,
+				                                static_cast<float>(CurrentMission->DialogueDurationInSeconds + CurrentMission->TimeFrameInSeconds));
+			}
+		}
 
-		GetWorldTimerManager().SetTimer(ShadowWhispersTimerHandle, StopWhispersDelegate,
-		                                static_cast<float>(CurrentMission.DialogueDurationInSeconds), false);
-	}
+		if (CurrentMission->DialogueDurationInSeconds > 0)
+		{
+			GetWorldTimerManager().ClearTimer(ShadowWhispersTimerHandle);
 
-	if (CurrentMission.Sentences.Num() > 0)
-	{
-		VillainWidget->SetCurrentDialogue(CurrentMission.Sentences);
+			GetWorldTimerManager().SetTimer(ShadowWhispersTimerHandle, StopWhispersDelegate,
+			                                static_cast<float>(CurrentMission->DialogueDurationInSeconds), false);
+		}
+
+		if (VillainWidget)
+		{
+			if (CurrentMission->Sentences.Num() > 0)
+			{
+				VillainWidget->SetCurrentDialogue(CurrentMission->Sentences);
+			}
+		}
 	}
 }
 
@@ -187,6 +205,7 @@ void AVillain::NextMission()
 void AVillain::JumpScare()
 {
 	// TODO: Game Over
+	UGameplayStatics::OpenLevel(this, TEXT("BadEnding_Level"));
 }
 
 UMaterialInterface* AVillain::SwitchExpression(EVillainExpression Expression)
@@ -211,71 +230,88 @@ void AVillain::OnDialogueFinished()
 }
 
 void AVillain::OnExitRange() { }
+
 void AVillain::OnEnterRange()
 {
-	if (CurrentMission.ID == 0)
+	if (CurrentMission)
 	{
-		MarkMissionAsCompleted(0, true);
+		if (CurrentMission->ID == 0)
+		{
+			MarkMissionAsCompleted(0, true);
+		}
 	}
 }
 
 void AVillain::MarkMissionAsCompleted(const int ID, const bool ForceNextMission)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Mark mission as completed: %d"), ID);
-
-	// Initialize Variables
-	UMaterialInterface* ExpressionMaterial = SwitchExpression(CurrentMission.ExpressionAfterCompletion);
-	const bool RegisterShadows = OtherShadows.Num() == 0;
-	
-	for (IAffectedByMission* Affected : AffectedByMissionActors)
+	if (CurrentMission)
 	{
-		if (RegisterShadows)
+		UE_LOG(LogTemp, Warning, TEXT("Mark mission as completed: %d"), ID);
+		
+		UMaterialInterface* ExpressionMaterial = SwitchExpression(CurrentMission->ExpressionAfterCompletion);
+		
+		for (IAffectedByMission* Affected : AffectedByMissionActors)
 		{
-			if (AShadow* Shadow = Cast<AShadow>(Affected))
+			if (Affected)
 			{
-				OtherShadows.Add(Shadow);
+				// Update Affected Actors
+				Affected->OnMissionStatusChanged(CurrentMission->ID, true);
 			}
 		}
 
-		if (Affected)
+		// Switch Expression
+		for (AShadow* Shadow : OtherShadows)
 		{
-			// Update Affected Actors
-			Affected->OnMissionStatusChanged(CurrentMission.ID);
+			if (Shadow)
+			{
+				Shadow->SwitchExpression(ExpressionMaterial);
+			}
+		}
+		
+		// Finally mark mission as completed
+		if (CurrentMission->ID == ID)
+		{
+			CurrentMission->bIsCompleted = true;
+			bIsInteractive = true;
+
+			if (ForceNextMission)
+			{
+				NextMission();
+			}
 		}
 	}
 
-	// Switch Expression
-	for (AShadow* Shadow : OtherShadows)
-	{
-		if (Shadow)
-		{
-			Shadow->SwitchExpression(ExpressionMaterial);
-		}
-	}
-
-	// Finally mark mission as completed
-	if (CurrentMission.ID == ID)
-	{
-		CurrentMission.bIsCompleted = true;
-		bIsInteractive = true;
-
-		if (ForceNextMission)
-		{
-			NextMission();
-		}
-	}
 }
 
 void AVillain::MarkMissionAsUncompleted(const int ID)
 {
-	if (CurrentMission.ID == ID)
+	if (CurrentMission)
 	{
-		CurrentMission.bIsCompleted = false;
-		bIsInteractive = false;
+		if (CurrentMission->ID == ID)
+		{
+			CurrentMission->bIsCompleted = false;
+
+			if (CurrentMission->ID != 2)
+			{
+				bIsInteractive = false;
+			}
+
+			for (IAffectedByMission* Affected : AffectedByMissionActors)
+			{
+				if (Affected)
+				{
+					Affected->OnMissionStatusChanged(CurrentMission->ID, false);
+				}
+			}
+		}
 	}
 }
 
 EInteractionEffect AVillain::GetRequiredEffect() const
 {
-	return CurrentMission.RequiredEffect;
+	if (CurrentMission)
+	{
+		return CurrentMission->RequiredEffect;
+	}
+	return EInteractionEffect::None;
 }

@@ -26,6 +26,9 @@ private:
 	UPROPERTY(EditDefaultsOnly)
 	UStaticMeshComponent* Mesh;
 
+	UPROPERTY(EditDefaultsOnly, Category= "Audio")
+	UAudioComponent* OpenAudio;
+
 	UPROPERTY(EditDefaultsOnly)
 	UBoxComponent* Box;
 
