@@ -3,22 +3,26 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AffectedByMission.h"
 #include "GameFramework/Actor.h"
 #include "Shadow.generated.h"
 
+struct FMissionData;
 class UCapsuleComponent;
 enum EVillainExpression : int;
 
 UCLASS()
-class DOASITSAYS_API AShadow : public AActor
+class DOASITSAYS_API AShadow : public AActor, public IAffectedByMission
 {
 	GENERATED_BODY()
 	
 public:	
 	AShadow();
 	virtual void Tick(float DeltaTime) override;
-	void OnMissionCompleted(int ID);
+	virtual void OnMissionCompleted(int ID) override;
 	void SwitchExpression(UMaterialInterface* ExpressionMaterial);
+	void Enable();
+	void Disable();
 
 protected:
 	virtual void BeginPlay() override;
@@ -29,8 +33,7 @@ private:
 
 	UPROPERTY(EditDefaultsOnly)
 	UCapsuleComponent* Capsule;
-
-	UPROPERTY(EditInstanceOnly)
-	int ShowAfterMissionCompletedID = 0;
-
+	
+	UPROPERTY(EditAnywhere)
+	int AffectedAfterMissionCompletedID = 0;
 };

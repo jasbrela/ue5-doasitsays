@@ -16,6 +16,10 @@ AShadow::AShadow()
 
 void AShadow::OnMissionCompleted(int ID)
 {
+	if (ID == this->AffectedAfterMissionCompletedID)
+	{
+		Enable();
+	}
 }
 
 void AShadow::SwitchExpression(UMaterialInterface* ExpressionMaterial)
@@ -23,6 +27,23 @@ void AShadow::SwitchExpression(UMaterialInterface* ExpressionMaterial)
 	Mesh->SetMaterial(0, ExpressionMaterial);
 }
 
-void AShadow::BeginPlay() { Super::BeginPlay(); }
+void AShadow::Enable()
+{
+	Mesh->SetVisibility(true);
+	Capsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+}
+
+void AShadow::Disable()
+{
+	Mesh->SetVisibility(false);
+	Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+}
+
+void AShadow::BeginPlay()
+{
+	Super::BeginPlay();
+	Disable();
+}
+
 void AShadow::Tick(float DeltaTime) { Super::Tick(DeltaTime); }
 

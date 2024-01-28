@@ -3,25 +3,36 @@
 
 #include "Door.h"
 
-// Sets default values
+#include "Components/BoxComponent.h"
+
 ADoor::ADoor()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
-
+	PrimaryActorTick.bCanEverTick = false;
+		
+	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
+	Box = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxCollision"));
+	
+	RootComponent = Mesh;
+	Box->SetupAttachment(RootComponent);
 }
 
-// Called when the game starts or when spawned
 void ADoor::BeginPlay()
 {
 	Super::BeginPlay();
 	
 }
 
-// Called every frame
 void ADoor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+}
+
+void ADoor::OnMissionCompleted(int ID)
+{
+	if (ID == this->AffectedAfterMissionCompletedID)
+	{
+		Mesh->AddLocalRotation(FRotator(0, AddedLocalRollAfterMission, 0));
+	}
 }
 

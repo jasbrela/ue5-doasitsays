@@ -3,24 +3,36 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AffectedByMission.h"
 #include "GameFramework/Actor.h"
 #include "Door.generated.h"
 
+class UBoxComponent;
+
 UCLASS()
-class DOASITSAYS_API ADoor : public AActor
+class DOASITSAYS_API ADoor : public AActor, public IAffectedByMission
 {
 	GENERATED_BODY()
 	
 public:	
-	// Sets default values for this actor's properties
 	ADoor();
+	virtual void Tick(float DeltaTime) override;
+	virtual void OnMissionCompleted(int ID) override;
+
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+private:
+	UPROPERTY(EditDefaultsOnly)
+	UStaticMeshComponent* Mesh;
 
+	UPROPERTY(EditDefaultsOnly)
+	UBoxComponent* Box;
+
+	UPROPERTY(EditAnywhere)
+	int AffectedAfterMissionCompletedID = 0;
+	
+	UPROPERTY(EditAnywhere)
+	int AddedLocalRollAfterMission = 0;
 };

@@ -68,12 +68,13 @@ void AVillain::BeginPlay()
 	Circuit = Cast<ACircuit>(Actors[0]);
 	
 	Actors.Empty();
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), OtherShadowsClass, Actors);
+	UGameplayStatics::GetAllActorsWithInterface(GetWorld(), UAffectedByMission::StaticClass(), Actors);
+	
 	for (AActor* Actor : Actors)
 	{
-		if (AShadow* Shadow = Cast<AShadow>(Actor))
+		if (IAffectedByMission* Affected = Cast<IAffectedByMission>(Actor))
 		{
-			OtherShadows.Add(Shadow);
+			AffectedByMissionActors.Add(Affected);
 		}
 	}
 	
@@ -177,11 +178,32 @@ void AVillain::GiveMission()
 void AVillain::NextMission()
 {
 	UMaterialInterface* ExpressionMaterial = SwitchExpression(CurrentMission.ExpressionAfterCompletion);
+
+	const bool RegisterShadows = OtherShadows.Num() == 0;
+	
+	for (IAffectedByMission* Affected : AffectedByMissionActors)
+	{
+		if (RegisterShadows)
+		{
+			if (AShadow* Shadow = Cast<AShadow>(Affected))
+			{
+				OtherShadows.Add(Shadow);
+			}
+		}
+
+		if (Affected)
+		{
+			Affected->OnMissionCompleted(CurrentMission.ID);
+		}
+		
+	}
 	
 	for (AShadow* Shadow : OtherShadows)
 	{
-		Shadow->SwitchExpression(ExpressionMaterial);
-		Shadow->OnMissionCompleted(CurrentMission.ID);
+		if (Shadow)
+		{
+			Shadow->SwitchExpression(ExpressionMaterial);
+		}
 	}
 	
 	GetWorldTimerManager().PauseTimer(TickingTimerHandle);
@@ -221,18 +243,23 @@ void AVillain::OnDialogueFinished()
 void AVillain::OnExitRange() { }
 void AVillain::OnEnterRange() { }
 
-void AVillain::MarkMissionAsCompleted(int id)
+void AVillain::MarkMissionAsCompleted(const int ID, const bool ForceNextMission)
 {
-	if (CurrentMission.ID == id)
+	if (CurrentMission.ID == ID)
 	{
 		CurrentMission.bIsCompleted = true;
 		bIsInteractive = true;
+
+		if (ForceNextMission)
+		{
+			NextMission();
+		}
 	}
 }
 
-void AVillain::MarkMissionAsUncompleted(int id)
+void AVillain::MarkMissionAsUncompleted(const int ID)
 {
-	if (CurrentMission.ID == id)
+	if (CurrentMission.ID == ID)
 	{
 		CurrentMission.bIsCompleted = false;
 		bIsInteractive = false;

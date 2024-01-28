@@ -9,6 +9,8 @@
 #include "MissionData.h"
 #include "Villain.generated.h"
 
+class IAffectedByMission;
+class UAffectedByMission;
 class AShadow;
 class ACircuit;
 class UVillainWidget;
@@ -25,8 +27,8 @@ public:
 	virtual void Interact(EInteractionEffect Effect = EInteractionEffect::None) override;
 	virtual void OnExitRange() override;
 	virtual void OnEnterRange() override;
-	void MarkMissionAsCompleted(int id);
-	void MarkMissionAsUncompleted(int id);
+	void MarkMissionAsCompleted(int ID, bool ForceNextMission = false);
+	void MarkMissionAsUncompleted(int ID);
 	EInteractionEffect GetRequiredEffect() const;
 
 protected:
@@ -71,7 +73,7 @@ private:
 	TArray<UMaterialInterface*> ExpressionMaterials;
 
 	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<AShadow> OtherShadowsClass;
+	TArray<IAffectedByMission*> AffectedByMissionActors;
 	
 	UPROPERTY(VisibleInstanceOnly)
 	TArray<AShadow*> OtherShadows;
