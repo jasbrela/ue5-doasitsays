@@ -67,10 +67,10 @@ void AVillain::BeginPlay()
 	
 	Actors.Empty();
 	UGameplayStatics::GetAllActorsWithInterface(GetWorld(), UAffectedByMission::StaticClass(), Actors);
-	
-	for (AActor* Actor : Actors)
+
+	for (int i = 0; i < Actors.Num(); i++)
 	{
-		if (IAffectedByMission* Affected = Cast<IAffectedByMission>(Actor))
+		if (IAffectedByMission* Affected = Cast<IAffectedByMission>(Actors[i]))
 		{
 			AffectedByMissionActors.Add(Affected);
 		}
@@ -246,25 +246,26 @@ void AVillain::MarkMissionAsCompleted(const int ID, const bool ForceNextMission)
 {
 	if (CurrentMission)
 	{
+		if (CurrentMission->bIsCompleted) return;
 		UE_LOG(LogTemp, Warning, TEXT("Mark mission as completed: %d"), ID);
 		
 		UMaterialInterface* ExpressionMaterial = SwitchExpression(CurrentMission->ExpressionAfterCompletion);
 		
-		for (IAffectedByMission* Affected : AffectedByMissionActors)
+		for (int i = 0; i < AffectedByMissionActors.Num(); i++)
 		{
-			if (Affected)
+			if (AffectedByMissionActors[i])
 			{
 				// Update Affected Actors
-				Affected->OnMissionStatusChanged(CurrentMission->ID, true);
+				AffectedByMissionActors[i]->OnMissionStatusChanged(CurrentMission->ID, true);
 			}
 		}
 
 		// Switch Expression
-		for (AShadow* Shadow : OtherShadows)
+		for (int i = 0; i < OtherShadows.Num(); i++)
 		{
-			if (Shadow)
+			if (OtherShadows[i])
 			{
-				Shadow->SwitchExpression(ExpressionMaterial);
+				OtherShadows[i]->SwitchExpression(ExpressionMaterial);
 			}
 		}
 		
@@ -287,6 +288,8 @@ void AVillain::MarkMissionAsUncompleted(const int ID)
 {
 	if (CurrentMission)
 	{
+		if (!CurrentMission->bIsCompleted) return;
+		
 		if (CurrentMission->ID == ID)
 		{
 			CurrentMission->bIsCompleted = false;
@@ -296,11 +299,11 @@ void AVillain::MarkMissionAsUncompleted(const int ID)
 				bIsInteractive = false;
 			}
 
-			for (IAffectedByMission* Affected : AffectedByMissionActors)
+			for (int i = 0; i < AffectedByMissionActors.Num(); i++)
 			{
-				if (Affected)
+				if (AffectedByMissionActors[i])
 				{
-					Affected->OnMissionStatusChanged(CurrentMission->ID, false);
+					AffectedByMissionActors[i]->OnMissionStatusChanged(CurrentMission->ID, false);
 				}
 			}
 		}

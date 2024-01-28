@@ -32,11 +32,11 @@ void ACircuit::Interact(EInteractionEffect Effect)
 
 	if (Lamps.Num() > 0)
 	{
-		for (ALamp* Lamp : Lamps)
+		for (int i = 0; i < Lamps.Num(); i++)
 		{
-			if (Lamp)
+			if (Lamps[i])
 			{
-				Lamp->ToggleCircuit(bIsOn);
+				Lamps[i]->ToggleCircuit(bIsOn);
 			}
 		}
 	}
@@ -59,7 +59,6 @@ void ACircuit::BeginPlay()
 void ACircuit::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 void ACircuit::Enable()
