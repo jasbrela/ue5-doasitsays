@@ -3,8 +3,6 @@
 #include "CoreMinimal.h"
 #include "FSentenceData.generated.h"
 
-enum EVillainExpression : int;
-
 USTRUCT(BlueprintType)
 struct FSentenceData
 {

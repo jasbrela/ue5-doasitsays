@@ -16,7 +16,7 @@ AShadow::AShadow()
 
 void AShadow::OnMissionStatusChanged(int ID, bool Completed)
 {
-	if (ID == this->AffectedAfterMissionCompletedID)
+	if (ID == AffectedAfterMissionCompletedID)
 	{
 		Completed ? Enable() : Disable();
 	}
@@ -24,7 +24,10 @@ void AShadow::OnMissionStatusChanged(int ID, bool Completed)
 
 void AShadow::SwitchExpression(UMaterialInterface* ExpressionMaterial)
 {
-	Mesh->SetMaterial(0, ExpressionMaterial);
+	if (ExpressionMaterial)
+	{
+		Mesh->SetMaterial(0, ExpressionMaterial);
+	}
 }
 
 void AShadow::Enable()

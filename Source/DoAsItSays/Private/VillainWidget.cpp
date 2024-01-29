@@ -11,6 +11,7 @@ UVillainWidget::UVillainWidget(const FObjectInitializer& ObjectInitializer) : Su
 void UVillainWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
+	TimerDelegate = FTimerDelegate::CreateUObject(this, &UVillainWidget::ShowNextCaption);
 }
 
 void UVillainWidget::Hide()
@@ -19,7 +20,7 @@ void UVillainWidget::Hide()
 	TimerText->SetVisibility(ESlateVisibility::Collapsed);
 }
 
-void UVillainWidget::ShowTimer(int seconds)
+void UVillainWidget::ShowTimer(int Seconds)
 {
 	if (TimerText)
 	{
@@ -27,23 +28,20 @@ void UVillainWidget::ShowTimer(int seconds)
 		{
 			TimerText->SetVisibility(ESlateVisibility::Visible);
 		}
-		TimerText->SetText(FText::AsNumber(seconds));
-	} else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("TIMER IS NULL"));
+		TimerText->SetText(FText::AsNumber(Seconds));
 	}
 }
 
-void UVillainWidget::SetCurrentDialogue(TArray<FSentenceData> sentences)
+void UVillainWidget::SetCurrentDialogue(const TArray<FSentenceData>& Sentences)
 {
-	CurrentDialogue = sentences;
+	CurrentDialogue = Sentences;
 	CurrentSentenceIndex = 0;
 	ShowNextCaption();
 }
 
 void UVillainWidget::ShowNextCaption()
 {
-	if (CurrentDialogue.Num() <= CurrentSentenceIndex)
+	if (CurrentSentenceIndex >= CurrentDialogue.Num())
 	{
 		ClearSubtitles();
 		return;
@@ -66,8 +64,6 @@ void UVillainWidget::ShowNextCaption()
 		if (const UWorld* World = GetWorld())
 		{
 			World->GetTimerManager().ClearTimer(ShowCaptionTimerHandle);
-
-			const FTimerDelegate TimerDelegate = FTimerDelegate::CreateUObject(this, &UVillainWidget::ShowNextCaption);
 			World->GetTimerManager().SetTimer(ShowCaptionTimerHandle, TimerDelegate,  CurrentSentence.Seconds, false);
 		}
 		

@@ -71,7 +71,6 @@ private:
 	UPROPERTY(EditDefaultsOnly)
 	TArray<UMaterialInterface*> ExpressionMaterials;
 
-	UPROPERTY(EditDefaultsOnly)
 	TArray<IAffectedByMission*> AffectedByMissionActors;
 	
 	UPROPERTY(EditInstanceOnly)
@@ -86,7 +85,7 @@ private:
 	void OnTimerEnd();
 	void GiveInitialMission();
 	FMissionData* CurrentMission;
-	FTimerHandle TickingTimerHandle;
+	FTimerHandle GameOverTimerHandle;
 	FTimerHandle ShadowWhispersTimerHandle;
 	FTimerDelegate TimerDelegate;
 	FTimerDelegate StopWhispersDelegate;

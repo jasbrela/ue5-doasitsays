@@ -25,10 +25,9 @@ public:
 	void Hide();
 	
 	UFUNCTION(BlueprintCallable)
-	void ShowTimer(int seconds);
+	void ShowTimer(int Seconds);
 	
-	UFUNCTION(BlueprintCallable)
-	void SetCurrentDialogue(TArray<FSentenceData> sentences);
+	void SetCurrentDialogue(const TArray<FSentenceData>& Sentences);
 
 	UFUNCTION(BlueprintCallable)
 	void ClearSubtitles();
@@ -53,7 +52,8 @@ public:
 
 private:
 	FTimerHandle ShowCaptionTimerHandle;
-	
+	FTimerDelegate TimerDelegate;
+
 	UFUNCTION(BlueprintCallable)
 	void ShowNextCaption();
 };

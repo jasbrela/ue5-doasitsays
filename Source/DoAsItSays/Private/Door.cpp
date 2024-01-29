@@ -32,7 +32,7 @@ void ADoor::Tick(float DeltaTime)
 void ADoor::OnMissionStatusChanged(int ID, bool Completed)
 {
 
-	if (ID == this->AffectedAfterMissionCompletedID)
+	if (ID == AffectedAfterMissionCompletedID)
 	{
 		if (AddedLocalRollAfterMission == 0) return;
 		

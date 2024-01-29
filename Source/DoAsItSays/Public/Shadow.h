@@ -9,7 +9,6 @@
 
 struct FMissionData;
 class UCapsuleComponent;
-enum EVillainExpression : int;
 
 UCLASS()
 class DOASITSAYS_API AShadow : public AActor, public IAffectedByMission

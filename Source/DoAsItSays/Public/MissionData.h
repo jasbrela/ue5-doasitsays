@@ -1,7 +1,6 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
-#include "MissionType.h"
 #include "FSentenceData.h"
 #include "InteractionEffect.h"
 #include "VillainExpression.h"

@@ -64,8 +64,6 @@ void AVillain::BeginPlay()
 	GiveInitialMission();
 
 	TArray<AActor*> Actors;
-	
-	Actors.Empty();
 	UGameplayStatics::GetAllActorsWithInterface(GetWorld(), UAffectedByMission::StaticClass(), Actors);
 
 	for (int i = 0; i < Actors.Num(); i++)
@@ -75,7 +73,6 @@ void AVillain::BeginPlay()
 			AffectedByMissionActors.Add(Affected);
 		}
 	}
-	
 }
 
 void AVillain::Interact(EInteractionEffect Effect)
@@ -161,18 +158,21 @@ void AVillain::GiveMission()
 			Circuit->Enable();
 		}
 
-		if (TickingAudio)
+		if (CurrentMission->TimeFrameInSeconds > 0)
 		{
-			if (!TickingAudio->IsPlaying())
+			if (TickingAudio)
 			{
-				TickingAudio->FadeIn(2);
+				if (!TickingAudio->IsPlaying())
+				{
+					TickingAudio->FadeIn(2);
 
-				GetWorldTimerManager().ClearTimer(TickingTimerHandle);
-
-				GetWorldTimerManager().SetTimer(TickingTimerHandle, TimerDelegate, 0, false,
-				                                static_cast<float>(CurrentMission->DialogueDurationInSeconds + CurrentMission->TimeFrameInSeconds));
+				}
 			}
 		}
+		
+		GetWorldTimerManager().ClearTimer(GameOverTimerHandle);
+		GetWorldTimerManager().SetTimer(GameOverTimerHandle, TimerDelegate, 0, false,
+			                            static_cast<float>(CurrentMission->DialogueDurationInSeconds + CurrentMission->TimeFrameInSeconds));
 
 		if (CurrentMission->DialogueDurationInSeconds > 0)
 		{
@@ -193,10 +193,10 @@ void AVillain::GiveMission()
 }
 
 void AVillain::NextMission()
-{	
-	GetWorldTimerManager().PauseTimer(TickingTimerHandle);
-
-	TickingAudio->FadeOut(2, 0);
+{
+	if (TickingAudio) {
+		TickingAudio->FadeOut(2, 0);
+	}
 
 	CurrentMissionIndex++;
 	GiveMission();
@@ -219,20 +219,23 @@ UMaterialInterface* AVillain::SwitchExpression(EVillainExpression Expression)
 		}
 	}
 	
-	UE_LOG(LogTemp, Warning, TEXT("Failed to set Villain's Expression"));
 	return Mesh->GetMaterial(0);
 }
 
 void AVillain::OnDialogueFinished()
 {
 	bIsInteractive = true;
-	ShadowWhispers->FadeOut(3, 0);
+	if (ShadowWhispers)
+	{
+		ShadowWhispers->FadeOut(3, 0);
+	}
 }
 
 void AVillain::OnExitRange() { }
 
 void AVillain::OnEnterRange()
 {
+
 	if (CurrentMission)
 	{
 		if (CurrentMission->ID == 0)
@@ -247,7 +250,6 @@ void AVillain::MarkMissionAsCompleted(const int ID, const bool ForceNextMission)
 	if (CurrentMission)
 	{
 		if (CurrentMission->bIsCompleted) return;
-		UE_LOG(LogTemp, Warning, TEXT("Mark mission as completed: %d"), ID);
 		
 		UMaterialInterface* ExpressionMaterial = SwitchExpression(CurrentMission->ExpressionAfterCompletion);
 		
@@ -261,12 +263,19 @@ void AVillain::MarkMissionAsCompleted(const int ID, const bool ForceNextMission)
 		}
 
 		// Switch Expression
-		for (int i = 0; i < OtherShadows.Num(); i++)
+		if (ExpressionMaterial)
 		{
-			if (OtherShadows[i])
+			for (int i = 0; i < OtherShadows.Num(); i++)
 			{
-				OtherShadows[i]->SwitchExpression(ExpressionMaterial);
+				if (OtherShadows[i])
+				{
+					OtherShadows[i]->SwitchExpression(ExpressionMaterial);
+				}
 			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Expression NULL"));
 		}
 		
 		// Finally mark mission as completed
