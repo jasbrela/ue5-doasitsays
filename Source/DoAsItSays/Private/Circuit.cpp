@@ -11,10 +11,8 @@ ACircuit::ACircuit()
 {
 	SwitchAudio = CreateDefaultSubobject<UAudioComponent>(TEXT("SwitchSFX"));
 	CircuitMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CircuitMesh"));
-	CircuitDoorMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CircuitDoorMesh"));
 	
 	RootComponent = CircuitMesh;
-	CircuitDoorMesh->SetupAttachment(RootComponent);
 	SwitchAudio->SetupAttachment(RootComponent);
 	
 	PrimaryActorTick.bCanEverTick = false;

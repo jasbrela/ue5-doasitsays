@@ -29,14 +29,20 @@ void APickUpObject::Tick(float DeltaTime)
 
 void APickUpObject::OnPickUpObject()
 {
-	Mesh->SetMaterial(0, FixedMaterial);
+	if (FixedMaterial)
+	{
+		Mesh->SetMaterial(0, FixedMaterial);
+	}
 	Box->SetSimulatePhysics(false);
 	Box->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 void APickUpObject::OnDropObject()
 {
-	Mesh->SetMaterial(0, DefaultMaterial);
+	if (DefaultMaterial)
+	{
+		Mesh->SetMaterial(0, DefaultMaterial);
+	}
 	Box->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	Box->SetSimulatePhysics(true);
 }

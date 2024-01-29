@@ -46,7 +46,4 @@ private:
 
 	UPROPERTY(EditDefaultsOnly)
 	UStaticMeshComponent* CircuitMesh;
-
-	UPROPERTY(EditDefaultsOnly)
-	UStaticMeshComponent* CircuitDoorMesh;
 };
